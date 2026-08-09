@@ -814,7 +814,7 @@
     // --- CONSTANTS ---
     const WORLD_SIZE = 48;
     const WORLD_HEIGHT = 32;
-    const BLOCK_SIZE = 1;
+    const BLOCK_SIZE = 0.5;  // Smaller blocks like Minecraft
     
     // --- FPS COUNTER ---
     let fps = 0;
@@ -839,7 +839,7 @@
     const PLAYER_SPEED = 8;
     const SPRINT_SPEED = 14;
     const JUMP_FORCE = 8;
-    const PLAYER_HEIGHT = 1.6;
+    const PLAYER_HEIGHT = 1.0;  // Adjusted for smaller blocks
     const MOUSE_SENSITIVITY = 0.002;
     const RENDER_DISTANCE = 15;  // Reduced for better performance
     
@@ -1011,19 +1011,19 @@
     scene.fog = new THREE.FogExp2(0x4a5568, 0.008);
     
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
-    camera.position.set(WORLD_SIZE/2, 20, WORLD_SIZE/2);
+    camera.position.set(WORLD_SIZE/2, 12, WORLD_SIZE/2);  // Lower start position
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = false;  // Disabled for performance
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 3.0;
+    renderer.toneMappingExposure = 1.2;  // Reduced for better colors
     document.body.appendChild(renderer.domElement);
     
     // --- LIGHTING ---
     // Ambient light for base visibility (dramatically increased)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);  // Reduced for better colors
     scene.add(ambientLight);
     
     // Hemisphere light for sky/ground color variation
