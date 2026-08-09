@@ -812,8 +812,8 @@
     }
     
     // --- CONSTANTS ---
-    const WORLD_SIZE = 48;
-    const WORLD_HEIGHT = 32;
+    const WORLD_SIZE = 32;  // Smaller world for better performance
+    const WORLD_HEIGHT = 20;  // Smaller world for better performance
     const BLOCK_SIZE = 0.3;  // Very small blocks like Minecraft
     
     // --- FPS COUNTER ---
@@ -841,7 +841,7 @@
     const JUMP_FORCE = 8;
     const PLAYER_HEIGHT = 2 * BLOCK_SIZE;  // Player height in scaled world
     const MOUSE_SENSITIVITY = 0.002;
-    const RENDER_DISTANCE = 15;  // Reduced for better performance
+    const RENDER_DISTANCE = 10;  // Very low for best performance
     
     // Block types
     const BLOCK = {
