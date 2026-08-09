@@ -814,7 +814,7 @@
     // --- CONSTANTS ---
     const WORLD_SIZE = 48;
     const WORLD_HEIGHT = 32;
-    const BLOCK_SIZE = 0.5;  // Smaller blocks like Minecraft
+    const BLOCK_SIZE = 0.3;  // Very small blocks like Minecraft
     
     // --- FPS COUNTER ---
     let fps = 0;
@@ -839,7 +839,7 @@
     const PLAYER_SPEED = 8;
     const SPRINT_SPEED = 14;
     const JUMP_FORCE = 8;
-    const PLAYER_HEIGHT = 1.0;  // Adjusted for smaller blocks
+    const PLAYER_HEIGHT = 0.6;  // Very small for tiny blocks
     const MOUSE_SENSITIVITY = 0.002;
     const RENDER_DISTANCE = 15;  // Reduced for better performance
     
@@ -1011,7 +1011,7 @@
     scene.fog = new THREE.FogExp2(0x4a5568, 0.008);
     
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
-    camera.position.set(WORLD_SIZE/2, 12, WORLD_SIZE/2);  // Lower start position
+    camera.position.set(WORLD_SIZE/2, 6, WORLD_SIZE/2);  // Very low for small blocks
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
