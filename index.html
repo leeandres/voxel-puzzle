@@ -859,7 +859,7 @@
         [BLOCK.SAND]: { color: 0xffe082, roughness: 0.95 },
         [BLOCK.GLASS]: { color: 0xe3f2fd, transparent: true, opacity: 0.3, roughness: 0.1 },
         [BLOCK.SECRET_WALL]: { color: 0x546e7a, roughness: 0.85 },
-        [BLOCK.TORCH]: { color: 0xff9800, emissive: 0xff6600, emissiveIntensity: 1.5 },
+        [BLOCK.TORCH]: { color: 0xff9800, emissive: 0xff6600, emissiveIntensity: 2.5 },
         [BLOCK.WEIGHT_PLATFORM]: { color: 0x455a64, metalness: 0.5 },
         [BLOCK.HEAVY_BLOCK]: { color: 0x37474f, roughness: 0.7 },
         [BLOCK.PRESSURE_PLATE]: { color: 0x78909c, metalness: 0.3 },
@@ -972,20 +972,20 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 2.0;
     document.body.appendChild(renderer.domElement);
     
     // --- LIGHTING ---
-    // Ambient light for base visibility (increased)
-    const ambientLight = new THREE.AmbientLight(0x606080, 0.6);
+    // Ambient light for base visibility (dramatically increased)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     scene.add(ambientLight);
     
     // Hemisphere light for sky/ground color variation
-    const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c3d, 0.4);
+    const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c3d, 0.8);
     scene.add(hemiLight);
     
     // Sun light for shadows and highlights
-    const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.0);
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
     sunLight.position.set(WORLD_SIZE/2, 50, WORLD_SIZE/2);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 4096;
@@ -998,13 +998,18 @@
     sunLight.shadow.camera.bottom = -40;
     scene.add(sunLight);
     
-    // Player Flashlight (starts ON)
-    const flashlight = new THREE.SpotLight(0xffffcc, 1.5, 30, Math.PI / 4, 0.3, 1);
+    // Player Flashlight (starts ON - much brighter and wider)
+    const flashlight = new THREE.SpotLight(0xffffcc, 3.0, 50, Math.PI / 3, 0.2, 1);
     flashlight.position.set(0, 0, 0);
     camera.add(flashlight);
     flashlight.target.position.set(0, 0, -1);
     camera.add(flashlight.target);
     scene.add(camera);
+    
+    // Player Glow Light (follows player, always on)
+    const playerGlow = new THREE.PointLight(0xffffff, 2.0, 25);
+    playerGlow.position.set(0, 1.5, 0);
+    camera.add(playerGlow);
     
     // --- NOISE GENERATOR ---
     let noise = new SimplexNoise(12345); // Default seed
@@ -1486,8 +1491,8 @@
                 
                 // Check if there's a solid block below
                 if (getBlock(x, y - 1, z) !== BLOCK.AIR && getBlock(x, y - 1, z) !== BLOCK.WATER) {
-                    // Random chance to place torch (increased for better visibility)
-                    if (Math.random() < 0.025) {
+                    // Random chance to place torch (high frequency for visibility)
+                    if (Math.random() < 0.04) {
                         setBlock(x, y, z, BLOCK.TORCH);
                     }
                 }
@@ -1544,12 +1549,12 @@
                 secretMeshes.set(key, mesh);
             }
             
-            // Add point light for certain blocks (increased brightness)
+            // Add point light for certain blocks (very bright)
             if (type === BLOCK.TORCH || type === BLOCK.GLOWING_MUSHROOM || type === BLOCK.CRYSTAL_CLUSTER) {
                 const light = new THREE.PointLight(
                     type === BLOCK.TORCH ? 0xff6600 : 
                     type === BLOCK.GLOWING_MUSHROOM ? 0x76ff03 : 0x7c4dff,
-                    1.0, 12
+                    2.0, 18
                 );
                 light.position.set(x + 0.5, y + 1, z + 0.5);
                 scene.add(light);
@@ -1950,7 +1955,7 @@
         
         if (e.code === 'KeyF') {
             gameState.flashlightOn = !gameState.flashlightOn;
-            flashlight.intensity = gameState.flashlightOn ? 1.5 : 0;
+            flashlight.intensity = gameState.flashlightOn ? 3.0 : 0;
             showHint('🔦', gameState.flashlightOn ? 'Linterna ENCENDIDA' : 'Linterna APAGADA');
         }
     });
