@@ -265,6 +265,10 @@
     <div id="puzzle-progress">
         <div class="puzzle-item" id="puzzle-key">🔑 Llave</div>
         <div class="puzzle-item" id="puzzle-door">🚪 Puerta</div>
+        <div class="puzzle-item" id="puzzle-light">💡 Luz</div>
+        <div class="puzzle-item" id="puzzle-color">🎨 Color</div>
+        <div class="puzzle-item" id="puzzle-plate">⬇️ Placa</div>
+        <div class="puzzle-item" id="puzzle-rune">🔮 Runas</div>
         <div class="puzzle-item" id="puzzle-exit">🏃 Salida</div>
     </div>
     
@@ -301,10 +305,20 @@
         totalSecrets: 5,
         hasKey: false,
         doorOpen: false,
+        lightPuzzleSolved: false,
+        colorPuzzleSolved: false,
+        platePuzzleSolved: false,
+        runePuzzleSolved: false,
         startTime: Date.now(),
         flashlightOn: true,
         currentCell: { x: 0, z: 0 }
     };
+    
+    // --- PUZZLE OBJECTS ---
+    let lightPuzzle = null;
+    let colorPuzzle = null;
+    let platePuzzle = null;
+    let runePuzzle = null;
     
     // --- THREE.JS SETUP ---
     const scene = new THREE.Scene();
@@ -484,6 +498,12 @@
         // Place key at random dead end
         placeKeyAndDoor();
         
+        // Place new puzzles
+        createLightPuzzle();
+        createColorPuzzle();
+        createPlatePuzzle();
+        createRunePuzzle();
+        
         // Place exit
         placeExit();
         
@@ -551,6 +571,172 @@
         exitMesh.rotation.x = -Math.PI / 2;
         exitMesh.position.set(exitPosition.x, 0.1, exitPosition.z);
         scene.add(exitMesh);
+    }
+    
+    // --- LIGHT BEAM PUZZLE ---
+    function createLightPuzzle() {
+        const deadEnds = findDeadEnds();
+        if (deadEnds.length < 3) return;
+        
+        const puzzleCell = deadEnds[Math.floor(Math.random() * deadEnds.length)];
+        const puzzlePos = cellToWorld(puzzleCell.x, puzzleCell.y);
+        
+        // Light source (emitter)
+        const emitterGeom = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const emitterMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 1 });
+        const emitter = new THREE.Mesh(emitterGeom, emitterMat);
+        emitter.position.set(puzzlePos.x - 1.5, 1, puzzlePos.z);
+        scene.add(emitter);
+        
+        // Light beam (visual)
+        const beamGeom = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.6 });
+        const beam = new THREE.Mesh(beamGeom, beamMat);
+        beam.rotation.z = Math.PI / 2;
+        beam.position.set(puzzlePos.x, 1, puzzlePos.z);
+        scene.add(beam);
+        
+        // Target (receiver)
+        const targetGeom = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const targetMat = new THREE.MeshStandardMaterial({ color: 0x444444, emissive: 0x444444, emissiveIntensity: 0.2 });
+        const target = new THREE.Mesh(targetGeom, targetMat);
+        target.position.set(puzzlePos.x + 1.5, 1, puzzlePos.z);
+        scene.add(target);
+        
+        // Mirror (player rotates to solve)
+        const mirrorGeom = new THREE.BoxGeometry(0.1, 0.8, 0.8);
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x4488ff, emissiveIntensity: 0.3, metalness: 0.9 });
+        const mirror = new THREE.Mesh(mirrorGeom, mirrorMat);
+        mirror.position.set(puzzlePos.x, 1, puzzlePos.z);
+        scene.add(mirror);
+        
+        lightPuzzle = {
+            position: puzzlePos,
+            emitter: emitter,
+            beam: beam,
+            target: target,
+            mirror: mirror,
+            solved: false,
+            mirrorAngle: 0
+        };
+    }
+    
+    // --- COLOR SEQUENCE PUZZLE ---
+    function createColorPuzzle() {
+        const deadEnds = findDeadEnds();
+        if (deadEnds.length < 3) return;
+        
+        const puzzleCell = deadEnds[Math.floor(Math.random() * deadEnds.length)];
+        const puzzlePos = cellToWorld(puzzleCell.x, puzzleCell.y);
+        
+        const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00];
+        const colorNames = ['Rojo', 'Verde', 'Azul', 'Amarillo'];
+        const correctOrder = [0, 2, 1, 3]; // Random correct order
+        
+        const crystals = [];
+        for (let i = 0; i < 4; i++) {
+            const crystalGeom = new THREE.OctahedronGeometry(0.3);
+            const crystalMat = new THREE.MeshStandardMaterial({ 
+                color: colors[i], 
+                emissive: colors[i], 
+                emissiveIntensity: 0.5 
+            });
+            const crystal = new THREE.Mesh(crystalGeom, crystalMat);
+            crystal.position.set(puzzlePos.x - 1.5 + i, 1, puzzlePos.z);
+            crystal.userData = { colorIndex: i, activated: false };
+            scene.add(crystal);
+            crystals.push(crystal);
+        }
+        
+        colorPuzzle = {
+            position: puzzlePos,
+            crystals: crystals,
+            correctOrder: correctOrder,
+            currentSequence: [],
+            solved: false
+        };
+    }
+    
+    // --- PRESSURE PLATE PUZZLE ---
+    function createPlatePuzzle() {
+        const deadEnds = findDeadEnds();
+        if (deadEnds.length < 3) return;
+        
+        const puzzleCell = deadEnds[Math.floor(Math.random() * deadEnds.length)];
+        const puzzlePos = cellToWorld(puzzleCell.x, puzzleCell.y);
+        
+        const plateColors = [0xff4444, 0x44ff44, 0x4444ff];
+        const plates = [];
+        const correctOrder = [0, 1, 2];
+        
+        for (let i = 0; i < 3; i++) {
+            const plateGeom = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
+            const plateMat = new THREE.MeshStandardMaterial({ 
+                color: plateColors[i], 
+                emissive: plateColors[i], 
+                emissiveIntensity: 0.3 
+            });
+            const plate = new THREE.Mesh(plateGeom, plateMat);
+            plate.position.set(puzzlePos.x - 1 + i, 0.05, puzzlePos.z);
+            plate.userData = { plateIndex: i, activated: false };
+            scene.add(plate);
+            plates.push(plate);
+        }
+        
+        platePuzzle = {
+            position: puzzlePos,
+            plates: plates,
+            correctOrder: correctOrder,
+            currentSequence: [],
+            solved: false
+        };
+    }
+    
+    // --- RUNE PUZZLE ---
+    function createRunePuzzle() {
+        const deadEnds = findDeadEnds();
+        if (deadEnds.length < 3) return;
+        
+        const puzzleCell = deadEnds[Math.floor(Math.random() * deadEnds.length)];
+        const puzzlePos = cellToWorld(puzzleCell.x, puzzleCell.y);
+        
+        const runeSymbols = ['⊕', '⊖', '⊗', '⊘'];
+        const runes = [];
+        
+        for (let i = 0; i < 4; i++) {
+            // Create rune stone
+            const runeGeom = new THREE.BoxGeometry(0.6, 1.2, 0.3);
+            const runeMat = new THREE.MeshStandardMaterial({ 
+                color: 0x666666, 
+                roughness: 0.8 
+            });
+            const rune = new THREE.Mesh(runeGeom, runeMat);
+            rune.position.set(puzzlePos.x - 1.5 + i, 0.6, puzzlePos.z);
+            
+            // Add glowing symbol
+            const symbolGeom = new THREE.PlaneGeometry(0.4, 0.4);
+            const symbolMat = new THREE.MeshBasicMaterial({ 
+                color: 0x9944ff, 
+                transparent: true, 
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            const symbol = new THREE.Mesh(symbolGeom, symbolMat);
+            symbol.position.set(0, 0, 0.16);
+            rune.add(symbol);
+            
+            rune.userData = { runeIndex: i, symbol: runeSymbols[i], activated: false };
+            scene.add(rune);
+            runes.push(rune);
+        }
+        
+        runePuzzle = {
+            position: puzzlePos,
+            runes: runes,
+            correctSequence: [0, 2, 1, 3],
+            currentSequence: [],
+            solved: false
+        };
     }
     
     function findDeadEnds() {
@@ -708,6 +894,112 @@
             }
         }
         
+        // Check light puzzle (press E near mirror)
+        if (lightPuzzle && !lightPuzzle.solved && gameState.running) {
+            const dist = camera.position.distanceTo(new THREE.Vector3(lightPuzzle.position.x, PLAYER_HEIGHT, lightPuzzle.position.z));
+            if (dist < 2 && keys['KeyE']) {
+                lightPuzzle.mirrorAngle += Math.PI / 4;
+                lightPuzzle.mirror.rotation.y = lightPuzzle.mirrorAngle;
+                
+                // Check if beam hits target (angle should be 0 or PI)
+                if (lightPuzzle.mirrorAngle >= Math.PI * 2) {
+                    lightPuzzle.solved = true;
+                    gameState.lightPuzzleSolved = true;
+                    lightPuzzle.target.material.emissive.setHex(0x00ff00);
+                    lightPuzzle.target.material.emissiveIntensity = 1;
+                    showNotification('💡', '¡Puzzle de Luz Resuelto!', 'El rayo alcanza el objetivo');
+                    document.getElementById('puzzle-light').classList.add('solved');
+                }
+            }
+        }
+        
+        // Check color puzzle (press E near crystals)
+        if (colorPuzzle && !colorPuzzle.solved && gameState.running) {
+            colorPuzzle.crystals.forEach((crystal, index) => {
+                const dist = camera.position.distanceTo(new THREE.Vector3(crystal.position.x, PLAYER_HEIGHT, crystal.position.z));
+                if (dist < 1.5 && keys['KeyE'] && !crystal.userData.activated) {
+                    crystal.userData.activated = true;
+                    crystal.material.emissiveIntensity = 1;
+                    colorPuzzle.currentSequence.push(crystal.userData.colorIndex);
+                    
+                    // Check sequence
+                    const isCorrect = colorPuzzle.currentSequence.every((val, i) => val === colorPuzzle.correctOrder[i]);
+                    if (!isCorrect) {
+                        // Reset
+                        colorPuzzle.currentSequence = [];
+                        colorPuzzle.crystals.forEach(c => {
+                            c.userData.activated = false;
+                            c.material.emissiveIntensity = 0.5;
+                        });
+                        showNotification('🎨', 'Secuencia Incorrecta', 'Intenta de nuevo');
+                    } else if (colorPuzzle.currentSequence.length === colorPuzzle.correctOrder.length) {
+                        colorPuzzle.solved = true;
+                        gameState.colorPuzzleSolved = true;
+                        showNotification('🎨', '¡Puzzle de Color Resuelto!', 'Secuencia correcta');
+                        document.getElementById('puzzle-color').classList.add('solved');
+                    }
+                }
+            });
+        }
+        
+        // Check plate puzzle (step on plates)
+        if (platePuzzle && !platePuzzle.solved && gameState.running) {
+            platePuzzle.plates.forEach((plate, index) => {
+                const dist = camera.position.distanceTo(new THREE.Vector3(plate.position.x, PLAYER_HEIGHT, plate.position.z));
+                if (dist < 1 && !plate.userData.activated) {
+                    plate.userData.activated = true;
+                    plate.position.y = 0.02; // Press down
+                    platePuzzle.currentSequence.push(plate.userData.plateIndex);
+                    
+                    // Check sequence
+                    const isCorrect = platePuzzle.currentSequence.every((val, i) => val === platePuzzle.correctOrder[i]);
+                    if (!isCorrect) {
+                        // Reset
+                        platePuzzle.currentSequence = [];
+                        platePuzzle.plates.forEach(p => {
+                            p.userData.activated = false;
+                            p.position.y = 0.05;
+                        });
+                        showNotification('⬇️', 'Secuencia Incorrecta', 'Pisa las placas en orden');
+                    } else if (platePuzzle.currentSequence.length === platePuzzle.correctOrder.length) {
+                        platePuzzle.solved = true;
+                        gameState.platePuzzleSolved = true;
+                        showNotification('⬇️', '¡Puzzle de Placas Resuelto!', 'Orden correcto');
+                        document.getElementById('puzzle-plate').classList.add('solved');
+                    }
+                }
+            });
+        }
+        
+        // Check rune puzzle (press E near runes)
+        if (runePuzzle && !runePuzzle.solved && gameState.running) {
+            runePuzzle.runes.forEach((rune, index) => {
+                const dist = camera.position.distanceTo(new THREE.Vector3(rune.position.x, PLAYER_HEIGHT, rune.position.z));
+                if (dist < 1.5 && keys['KeyE'] && !rune.userData.activated) {
+                    rune.userData.activated = true;
+                    rune.children[0].material.color.setHex(0x00ff00);
+                    runePuzzle.currentSequence.push(rune.userData.runeIndex);
+                    
+                    // Check sequence
+                    const isCorrect = runePuzzle.currentSequence.every((val, i) => val === runePuzzle.correctSequence[i]);
+                    if (!isCorrect) {
+                        // Reset
+                        runePuzzle.currentSequence = [];
+                        runePuzzle.runes.forEach(r => {
+                            r.userData.activated = false;
+                            r.children[0].material.color.setHex(0x9944ff);
+                        });
+                        showNotification('🔮', 'Secuencia Incorrecta', 'Activa las runas en orden');
+                    } else if (runePuzzle.currentSequence.length === runePuzzle.correctSequence.length) {
+                        runePuzzle.solved = true;
+                        gameState.runePuzzleSolved = true;
+                        showNotification('🔮', '¡Puzzle de Runas Resuelto!', 'Secuencia correcta');
+                        document.getElementById('puzzle-rune').classList.add('solved');
+                    }
+                }
+            });
+        }
+        
         // Check exit
         if (exitPosition) {
             const dist = camera.position.distanceTo(new THREE.Vector3(exitPosition.x, PLAYER_HEIGHT, exitPosition.z));
@@ -719,8 +1011,7 @@
                     gameState.doorOpen = false;
                     gameState.secretsFound = 0;
                     document.getElementById('level-display').textContent = gameState.level;
-                    document.getElementById('puzzle-key').classList.remove('solved');
-                    document.getElementById('puzzle-door').classList.remove('solved');
+                    document.querySelectorAll('.puzzle-item').forEach(el => el.classList.remove('solved'));
                     buildMaze();
                 }, 3000);
             }
