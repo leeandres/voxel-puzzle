@@ -839,7 +839,7 @@
     const PLAYER_SPEED = 8;
     const SPRINT_SPEED = 14;
     const JUMP_FORCE = 8;
-    const PLAYER_HEIGHT = 0.6;  // Very small for tiny blocks
+    const PLAYER_HEIGHT = 2 * BLOCK_SIZE;  // Player height in scaled world
     const MOUSE_SENSITIVITY = 0.002;
     const RENDER_DISTANCE = 15;  // Reduced for better performance
     
@@ -1011,7 +1011,7 @@
     scene.fog = new THREE.FogExp2(0x4a5568, 0.008);
     
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
-    camera.position.set(WORLD_SIZE/2, 6, WORLD_SIZE/2);  // Very low for small blocks
+    camera.position.set(WORLD_SIZE/2 * BLOCK_SIZE, 4 * BLOCK_SIZE, WORLD_SIZE/2 * BLOCK_SIZE);  // Scaled for small blocks
     
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1032,7 +1032,7 @@
     
     // Sun light for shadows and highlights
     const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
-    sunLight.position.set(WORLD_SIZE/2, 50, WORLD_SIZE/2);
+    sunLight.position.set(WORLD_SIZE/2 * BLOCK_SIZE, 20, WORLD_SIZE/2 * BLOCK_SIZE);
     sunLight.castShadow = false;  // Disabled for performance
     scene.add(sunLight);
     
@@ -1045,8 +1045,8 @@
     scene.add(camera);
     
     // Player Glow Light (follows player, always on)
-    const playerGlow = new THREE.PointLight(0xffffff, 4.0, 40);
-    playerGlow.position.set(0, 1.5, 0);
+    const playerGlow = new THREE.PointLight(0xffffff, 2.0, 10);
+    playerGlow.position.set(0, PLAYER_HEIGHT * 0.5, 0);
     camera.add(playerGlow);
     
     // Visible glow orb around player
@@ -1058,7 +1058,7 @@
         side: THREE.BackSide
     });
     const glowOrb = new THREE.Mesh(glowGeometry, glowMaterial);
-    glowOrb.position.set(0, 1.5, 0);
+    glowOrb.position.set(0, PLAYER_HEIGHT * 0.5, 0);
     camera.add(glowOrb);
     
     // Outer glow ring
@@ -1070,7 +1070,7 @@
         side: THREE.DoubleSide
     });
     const glowRing = new THREE.Mesh(ringGeometry, ringMaterial);
-    glowRing.position.set(0, 1.5, 0);
+    glowRing.position.set(0, PLAYER_HEIGHT * 0.5, 0);
     glowRing.rotation.x = Math.PI / 2;
     camera.add(glowRing);
     
@@ -1602,7 +1602,7 @@
             });
             
             const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+            mesh.position.set(x * BLOCK_SIZE + BLOCK_SIZE/2, y * BLOCK_SIZE + BLOCK_SIZE/2, z * BLOCK_SIZE + BLOCK_SIZE/2);
             mesh.castShadow = false;
             mesh.receiveShadow = false;
             mesh.userData = { blockType: type, x, y, z, key };
@@ -1622,7 +1622,7 @@
                     type === BLOCK.GLOWING_MUSHROOM ? 0x76ff03 : 0x7c4dff,
                     1.5, 12
                 );
-                light.position.set(x + 0.5, y + 1, z + 0.5);
+                light.position.set(x * BLOCK_SIZE + BLOCK_SIZE/2, (y + 1) * BLOCK_SIZE, z * BLOCK_SIZE + BLOCK_SIZE/2);
                 scene.add(light);
                 torchLights.push(light);
             }
@@ -2368,10 +2368,10 @@
         const blend = getBlendFactor(time);
         const preset = TIME_PRESETS[phase];
         
-        // Update sun position
-        sunLight.position.x = Math.cos(sunAngle) * 50 + WORLD_SIZE/2;
-        sunLight.position.y = Math.max(5, Math.sin(sunAngle) * 50);
-        sunLight.position.z = WORLD_SIZE/2;
+        // Update sun position (scaled for small blocks)
+        sunLight.position.x = Math.cos(sunAngle) * 20 + WORLD_SIZE/2 * BLOCK_SIZE;
+        sunLight.position.y = Math.max(3, Math.sin(sunAngle) * 20);
+        sunLight.position.z = WORLD_SIZE/2 * BLOCK_SIZE;
         
         // Update sun light
         sunLight.intensity = preset.sunIntensity * blend;
