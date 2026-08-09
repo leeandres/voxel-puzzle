@@ -1011,6 +1011,34 @@
     playerGlow.position.set(0, 1.5, 0);
     camera.add(playerGlow);
     
+    // Visible glow orb around player
+    const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.BackSide
+    });
+    const glowOrb = new THREE.Mesh(glowGeometry, glowMaterial);
+    glowOrb.position.set(0, 1.5, 0);
+    camera.add(glowOrb);
+    
+    // Outer glow ring
+    const ringGeometry = new THREE.RingGeometry(1.0, 1.3, 32);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.DoubleSide
+    });
+    const glowRing = new THREE.Mesh(ringGeometry, ringMaterial);
+    glowRing.position.set(0, 1.5, 0);
+    glowRing.rotation.x = Math.PI / 2;
+    camera.add(glowRing);
+    
+    // Player particles array
+    const playerParticles = [];
+    
     // --- NOISE GENERATOR ---
     let noise = new SimplexNoise(12345); // Default seed
     
@@ -2278,11 +2306,63 @@
         requestAnimationFrame(animate);
         
         const delta = Math.min(clock.getDelta(), 0.1);
+        const time = Date.now() * 0.001;
         
         updatePlayer(delta);
         updateRaycast();
         updateDayNight(delta);
         updateParticles(delta);
+        
+        // Animate player glow orb
+        if (glowOrb) {
+            glowOrb.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+            glowOrb.material.opacity = 0.1 + Math.sin(time * 3) * 0.05;
+        }
+        
+        // Animate glow ring
+        if (glowRing) {
+            glowRing.rotation.z += delta * 0.5;
+            glowRing.scale.setScalar(1 + Math.sin(time * 1.5) * 0.15);
+            glowRing.material.opacity = 0.08 + Math.sin(time * 2) * 0.03;
+        }
+        
+        // Spawn player particles occasionally
+        if (Math.random() < 0.1 && playerParticles.length < 50) {
+            const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const particleMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            particle.position.set(
+                (Math.random() - 0.5) * 2,
+                Math.random() * 2,
+                (Math.random() - 0.5) * 2
+            );
+            particle.velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.02,
+                Math.random() * 0.02 + 0.01,
+                (Math.random() - 0.5) * 0.02
+            );
+            particle.life = 1.0;
+            camera.add(particle);
+            playerParticles.push(particle);
+        }
+        
+        // Update player particles
+        for (let i = playerParticles.length - 1; i >= 0; i--) {
+            const p = playerParticles[i];
+            p.position.add(p.velocity);
+            p.life -= delta * 0.5;
+            p.material.opacity = p.life * 0.8;
+            p.scale.setScalar(p.life);
+            
+            if (p.life <= 0) {
+                camera.remove(p);
+                playerParticles.splice(i, 1);
+            }
+        }
         
         // Update torch lights
         torchLights.forEach(light => {
