@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forgotten Depths - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+        }
+        
+        .card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+        
+        .achievement-locked {
+            filter: grayscale(100%);
+            opacity: 0.5;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #4fc3f7 0%, #0288d1 100%);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #4fc3f7;
+            color: #4fc3f7;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⛏️</span>
+                <span class="text-xl font-bold">The Forgotten Depths</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="showSection('dashboard')" class="hover:text-cyan-400 transition">Dashboard</button>
+                <button onclick="showSection('stats')" class="hover:text-cyan-400 transition">Estadísticas</button>
+                <button onclick="showSection('achievements')" class="hover:text-cyan-400 transition">Logros</button>
+                <button onclick="showSection('settings')" class="hover:text-cyan-400 transition">Configuración</button>
+                <div class="flex items-center gap-3 ml-4 pl-4 border-l border-white/20">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=Jugador&background=4fc3f7&color=fff" 
+                         class="w-8 h-8 rounded-full" alt="Avatar">
+                    <span id="user-name" class="text-sm">Jugador</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- Dashboard Section -->
+        <section id="section-dashboard" class="space-y-6">
+            <!-- Welcome Banner -->
+            <div class="card-glass rounded-2xl p-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold mb-2">¡Bienvenido, <span id="welcome-name">Jugador</span>!</h1>
+                        <p class="text-gray-400">Tu última partida fue hace 2 días. ¡Sigue explorando!</p>
+                    </div>
+                    <button onclick="window.location.href='index.html'" class="btn-primary px-6 py-3 rounded-xl font-semibold">
+                        ▶️ Jugar Ahora
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="stat-card card-glass rounded-xl p-5 transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-400 text-sm">Nivel</span>
+                        <span class="text-2xl">⭐</span>
+                    </div>
+                    <div class="text-3xl font-bold text-cyan-400" id="user-level">12</div>
+                    <div class="text-xs text-gray-500 mt-1">2,450 / 3,000 XP</div>
+                </div>
+                
+                <div class="stat-card card-glass rounded-xl p-5 transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-400 text-sm">Secretos</span>
+                        <span class="text-2xl">🔓</span>
+                    </div>
+                    <div class="text-3xl font-bold text-yellow-400" id="total-secrets">8</div>
+                    <div class="text-xs text-gray-500 mt-1">de 12 encontrados</div>
+                </div>
+                
+                <div class="stat-card card-glass rounded-xl p-5 transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-400 text-sm">Puzzles</span>
+                        <span class="text-2xl">🧩</span>
+                    </div>
+                    <div class="text-3xl font-bold text-green-400" id="total-puzzles">4</div>
+                    <div class="text-xs text-gray-500 mt-1">de 6 resueltos</div>
+                </div>
+                
+                <div class="stat-card card-glass rounded-xl p-5 transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-400 text-sm">Tiempo</span>
+                        <span class="text-2xl">⏱️</span>
+                    </div>
+                    <div class="text-3xl font-bold text-purple-400" id="total-time">45h</div>
+                    <div class="text-xs text-gray-500 mt-1">en 15 partidas</div>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="card-glass rounded-2xl p-6">
+                <h2 class="text-lg font-semibold mb-4">📊 Progreso General</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">Exploración del Mundo</span>
+                            <span class="text-cyan-400">78%</span>
+                        </div>
+                        <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div class="progress-bar h-full rounded-full" style="width: 78%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">Secretos Descubiertos</span>
+                            <span class="text-yellow-400">67%</span>
+                        </div>
+                        <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div class="progress-bar h-full rounded-full" style="width: 67%; background: linear-gradient(90deg, #ffd54f, #ffab00);"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">Puzzles Completados</span>
+                            <span class="text-green-400">67%</span>
+                        </div>
+                        <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div class="progress-bar h-full rounded-full" style="width: 67%; background: linear-gradient(90deg, #4caf50, #8bc34a);"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">Diario del Explorador</span>
+                            <span class="text-purple-400">54%</span>
+                        </div>
+                        <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div class="progress-bar h-full rounded-full" style="width: 54%; background: linear-gradient(90deg, #9c27b0, #e040fb);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card-glass rounded-2xl p-6">
+                <h2 class="text-lg font-semibold mb-4">📅 Actividad Reciente</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                        <span class="text-xl">🔓</span>
+                        <div class="flex-1">
+                            <div class="font-medium">Secreto descubierto</div>
+                            <div class="text-sm text-gray-400">Cámara oculta en el Bosque Petrificado</div>
+                        </div>
+                        <span class="text-sm text-gray-500">Hace 2 horas</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                        <span class="text-xl">🧩</span>
+                        <div class="flex-1">
+                            <div class="font-medium">Puzzle resuelto</div>
+                            <div class="text-sm text-gray-400">Puzzle de Espejos - Tiempo: 4:32</div>
+                        </div>
+                        <span class="text-sm text-gray-500">Ayer</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                        <span class="text-xl">📖</span>
+                        <div class="flex-1">
+                            <div class="font-medium">Página del diario</div>
+                            <div class="text-sm text-gray-400">Entry #27: The Crystal Song</div>
+                        </div>
+                        <span class="text-sm text-gray-500">Hace 3 días</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                        <span class="text-xl">🏆</span>
+                        <div class="flex-1">
+                            <div class="font-medium">Logro desbloqueado</div>
+                            <div class="text-sm text-gray-400">Cazador de Secretos - 10 secretos encontrados</div>
+                        </div>
+                        <span class="text-sm text-gray-500">Hace 5 días</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section id="section-stats" class="space-y-6 hidden">
+            <div class="card-glass rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-6">📊 Estadísticas Detalladas</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Game Stats -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>🎮</span> Partidas
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Partidas jugadas</span>
+                                <span class="font-semibold">15</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Partidas completadas</span>
+                                <span class="font-semibold text-green-400">12</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Tasa de completación</span>
+                                <span class="font-semibold text-cyan-400">80%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Tiempo total jugado</span>
+                                <span class="font-semibold">45h 23m</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Tiempo promedio</span>
+                                <span class="font-semibold">3h 01m</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Mejor tiempo</span>
+                                <span class="font-semibold text-yellow-400">14m 32s</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Puzzle Stats -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>🧩</span> Puzzles
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🔥 Espejos</span>
+                                <span class="font-semibold">5 resueltos</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🎨 Colores</span>
+                                <span class="font-semibold">4 resueltos</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">⚖️ Peso</span>
+                                <span class="font-semibold">3 resueltos</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🔑 Llave</span>
+                                <span class="font-semibold">2 resueltos</span>
+                            </div>
+                            <div class="flex justify-between border-t border-white/10 pt-3">
+                                <span class="text-gray-400">Total puzzles</span>
+                                <span class="font-semibold text-cyan-400">14</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Secrets Stats -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>🔓</span> Secretos por Bioma
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🌲 Bosque Petrificado</span>
+                                <span class="font-semibold">3 encontrados</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">💎 Cavernas de Cristal</span>
+                                <span class="font-semibold">2 encontrados</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🏛️ Templo Sumergido</span>
+                                <span class="font-semibold">2 encontrados</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🕳️ El Abismo</span>
+                                <span class="font-semibold">1 encontrado</span>
+                            </div>
+                            <div class="flex justify-between border-t border-white/10 pt-3">
+                                <span class="text-gray-400">Total secretos</span>
+                                <span class="font-semibold text-yellow-400">8</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Collection Stats -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>💎</span> Colecciones
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">💎 Diamantes</span>
+                                <span class="font-semibold">12</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🥇 Oro</span>
+                                <span class="font-semibold">8</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🥈 Plata</span>
+                                <span class="font-semibold">15</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">🗝️ Llaves</span>
+                                <span class="font-semibold">4</span>
+                            </div>
+                            <div class="flex justify-between border-t border-white/10 pt-3">
+                                <span class="text-gray-400">📖 Páginas del diario</span>
+                                <span class="font-semibold text-purple-400">27/50</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Chart (Placeholder) -->
+            <div class="card-glass rounded-2xl p-6">
+                <h2 class="text-lg font-semibold mb-4">📈 Rendimiento en el Tiempo</h2>
+                <div class="h-64 bg-white/5 rounded-xl flex items-center justify-center">
+                    <div class="text-center text-gray-500">
+                        <span class="text-4xl mb-2 block">📊</span>
+                        <p>Gráfico de rendimiento próximamente</p>
+                        <p class="text-sm">Se mostrará tu progreso a lo largo del tiempo</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Achievements Section -->
+        <section id="section-achievements" class="space-y-6 hidden">
+            <div class="card-glass rounded-2xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">🏆 Logros</h2>
+                    <span class="text-sm text-gray-400">4/8 desbloqueados</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Unlocked Achievement -->
+                    <div class="bg-white/5 rounded-xl p-4 border border-yellow-500/30">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">🎯</span>
+                            <h3 class="font-semibold text-yellow-400">Primer Paso</h3>
+                            <p class="text-xs text-gray-400 mt-1">Completa tu primera partida</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-yellow-500/20 rounded text-xs text-yellow-400">+50 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 border border-cyan-500/30">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">⚡</span>
+                            <h3 class="font-semibold text-cyan-400">Speedrunner</h3>
+                            <p class="text-xs text-gray-400 mt-1">Completa en menos de 15 minutos</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-cyan-500/20 rounded text-xs text-cyan-400">+200 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 border border-green-500/30">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">🧩</span>
+                            <h3 class="font-semibold text-green-400">Maestro de Puzzles</h3>
+                            <p class="text-xs text-gray-400 mt-1">Resuelve un puzzle de cada tipo</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-green-500/20 rounded text-xs text-green-400">+150 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 border border-purple-500/30">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">🔓</span>
+                            <h3 class="font-semibold text-purple-400">Cazador de Secretos</h3>
+                            <p class="text-xs text-gray-400 mt-1">Encuentra 10 secretos en total</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-purple-500/20 rounded text-xs text-purple-400">+100 XP</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Locked Achievements -->
+                    <div class="bg-white/5 rounded-xl p-4 achievement-locked">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">⭐</span>
+                            <h3 class="font-semibold">Veterano</h3>
+                            <p class="text-xs text-gray-400 mt-1">Alcanza el nivel 5</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-white/10 rounded text-xs">+100 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 achievement-locked">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">💎</span>
+                            <h3 class="font-semibold">Coleccionista</h3>
+                            <p class="text-xs text-gray-400 mt-1">Recoge 50 items en total</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-white/10 rounded text-xs">+75 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 achievement-locked">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">📖</span>
+                            <h3 class="font-semibold">Erudito</h3>
+                            <p class="text-xs text-gray-400 mt-1">Lee 30 páginas del diario</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-white/10 rounded text-xs">+75 XP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 achievement-locked">
+                        <div class="text-center">
+                            <span class="text-4xl block mb-2">🌍</span>
+                            <h3 class="font-semibold">Explorador</h3>
+                            <p class="text-xs text-gray-400 mt-1">Visita los 4 biomas</p>
+                            <span class="inline-block mt-2 px-2 py-1 bg-white/10 rounded text-xs">+100 XP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="section-settings" class="space-y-6 hidden">
+            <div class="card-glass rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-6">⚙️ Configuración</h2>
+                
+                <div class="space-y-6 max-w-2xl">
+                    <!-- Account -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>👤</span> Cuenta
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <img id="settings-avatar" src="https://ui-avatars.com/api/?name=Jugador&background=4fc3f7&color=fff" 
+                                         class="w-12 h-12 rounded-full" alt="Avatar">
+                                    <div>
+                                        <div class="font-medium" id="settings-name">Jugador</div>
+                                        <div class="text-sm text-gray-400" id="settings-email">jugador@email.com</div>
+                                    </div>
+                                </div>
+                                <button class="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
+                                    Cambiar foto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Game Settings -->
+                    <div class="bg-white/5 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2">
+                            <span>🎮</span> Juego
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">Volumen</span>
+                                <input type="range" min="0" max="100" value="80" class="w-48 accent-cyan-400">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">Mostrar tutoriales</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">Notificaciones</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">Idioma</span>
+                                <select class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400">
+                                    <option value="es">Español</option>
+                                    <option value="en">English</option>
+                                    <option value="pt">Português</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Danger Zone -->
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-5">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2 text-red-400">
+                            <span>⚠️</span> Zona de Peligro
+                        </h3>
+                        <div class="space-y-3">
+                            <button class="w-full px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition text-left">
+                                Exportar mis datos
+                            </button>
+                            <button class="w-full px-4 py-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition text-left text-red-400">
+                                Borrar mi cuenta
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Logout -->
+                    <button onclick="handleLogout()" class="w-full px-4 py-3 bg-white/10 rounded-xl hover:bg-white/20 transition font-semibold">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 mt-12 py-6 text-center text-gray-500 text-sm">
+        <p>⛏️ The Forgotten Depths © 2026 | <a href="#" class="hover:text-cyan-400">Política de Privacidad</a></p>
+    </footer>
+
+    <script>
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(`section-${sectionName}`).classList.remove('hidden');
+        }
+        
+        // ============================================
+        // USER DATA (Mock - Replace with Firebase)
+        // ============================================
+        
+        const mockUserData = {
+            uid: 'user123',
+            displayName: 'Juan Pérez',
+            email: 'juan@gmail.com',
+            photoURL: 'https://ui-avatars.com/api/?name=Juan+Pérez&background=4fc3f7&color=fff',
+            level: 12,
+            experience: 2450,
+            secretsFound: 8,
+            totalSecrets: 12,
+            puzzlesSolved: 4,
+            totalPuzzles: 6,
+            totalPlaytime: 163380, // seconds
+            gamesPlayed: 15,
+            gamesCompleted: 12,
+            bestTime: 872, // seconds
+            achievements: ['first_game', 'speedrunner', 'puzzle_master', 'secret_hunter'],
+            journalPages: [1, 2, 3, 5, 7, 8, 10, 12, 15, 17, 19, 20, 22, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40]
+        };
+        
+        // ============================================
+        // UPDATE UI WITH USER DATA
+        // ============================================
+        
+        function updateUI(userData) {
+            // Update navigation
+            document.getElementById('user-name').textContent = userData.displayName;
+            document.getElementById('user-avatar').src = userData.photoURL;
+            
+            // Update welcome
+            document.getElementById('welcome-name').textContent = userData.displayName.split(' ')[0];
+            
+            // Update stats
+            document.getElementById('user-level').textContent = userData.level;
+            document.getElementById('total-secrets').textContent = userData.secretsFound;
+            document.getElementById('total-puzzles').textContent = userData.puzzlesSolved;
+            
+            // Format playtime
+            const hours = Math.floor(userData.totalPlaytime / 3600);
+            document.getElementById('total-time').textContent = `${hours}h`;
+            
+            // Update settings
+            document.getElementById('settings-avatar').src = userData.photoURL;
+            document.getElementById('settings-name').textContent = userData.displayName;
+            document.getElementById('settings-email').textContent = userData.email;
+        }
+        
+        // ============================================
+        // FIREBASE INTEGRATION (Placeholder)
+        // ============================================
+        
+        /*
+        // Uncomment and configure with your Firebase project
+        
+        import { initializeApp } from 'firebase/app';
+        import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+        import { getFirestore, doc, getDoc } from 'firebase/firestore';
+        
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Listen for auth state
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    updateUI({
+                        uid: user.uid,
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        ...userDoc.data()
+                    });
+                }
+            } else {
+                // No user signed in - redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+        
+        async function handleLogout() {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        }
+        */
+        
+        // ============================================
+        // MOCK FUNCTION (For demo without Firebase)
+        // ============================================
+        
+        function handleLogout() {
+            alert('Sesión cerrada. En producción, esto redirigiría al login.');
+            // window.location.href = 'login.html';
+        }
+        
+        // Initialize UI with mock data
+        updateUI(mockUserData);
+    </script>
+</body>
+</html>

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forgotten Depths - Tutorial</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Segoe UI', sans-serif;
+            cursor: none;
+        }
+        canvas { display: block; }
+        
+        /* Crosshair */
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.8;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.9);
+        }
+        #crosshair::before {
+            width: 2px;
+            height: 24px;
+            left: 11px;
+            top: 0;
+        }
+        #crosshair::after {
+            width: 24px;
+            height: 2px;
+            top: 11px;
+            left: 0;
+        }
+        
+        /* Tutorial Overlay */
+        #tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: opacity 0.5s;
+        }
+        #tutorial-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .tutorial-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 2px solid #4fc3f7;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(79,195,247,0.3);
+        }
+        
+        .tutorial-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .tutorial-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 10px;
+        }
+        
+        .tutorial-subtitle {
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 30px;
+        }
+        
+        .tutorial-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .key-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .key {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 60px;
+            transition: all 0.2s;
+        }
+        
+        .key.active {
+            background: rgba(79,195,247,0.3);
+            border-color: #4fc3f7;
+            transform: scale(1.1);
+        }
+        
+        .key-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
+            border: none;
+            padding: 16px 48px;
+            font-size: 18px;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(79,195,247,0.5);
+        }
+        
+        /* Step Indicator */
+        #step-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+        
+        .step-dot.active {
+            background: #4fc3f7;
+            box-shadow: 0 0 10px rgba(79,195,247,0.5);
+        }
+        
+        .step-dot.completed {
+            background: #4caf50;
+        }
+        
+        /* Instruction Panel */
+        #instruction-panel {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            border: 2px solid #4fc3f7;
+            border-radius: 16px;
+            padding: 20px 30px;
+            max-width: 600px;
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        
+        #instruction-panel.visible {
+            opacity: 1;
+        }
+        
+        .instruction-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 8px;
+        }
+        
+        .instruction-text {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+        }
+        
+        .instruction-key {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        /* Progress Bar */
+        #tutorial-progress {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            z-index: 100;
+            overflow: hidden;
+        }
+        
+        #tutorial-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4fc3f7, #0288d1);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* HUD */
+        #hud {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .hud-panel {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+        
+        .hud-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 6px;
+        }
+        
+        .hud-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        
+        /* Toolbar */
+        #toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        
+        .tool-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .tool-slot.active {
+            border-color: #4fc3f7;
+            background: rgba(79,195,247,0.2);
+            transform: translateY(-4px);
+        }
+        
+        .tool-slot.locked {
+            opacity: 0.3;
+        }
+        
+        .tool-name {
+            position: absolute;
+            bottom: -20px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+        
+        /* Arrow Indicator */
+        #arrow-indicator {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            animation: bounce 1s infinite;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #arrow-indicator.visible {
+            opacity: 1;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
+        /* Completion Screen */
+        #completion-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        #completion-screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .completion-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 3px solid #4caf50;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(76,175,80,0.4);
+        }
+        
+        .completion-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: celebrate 1s ease-in-out;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .completion-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4caf50;
+            margin-bottom: 10px;
+        }
+        
+        .completion-text {
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 30px;
+        }
+        
+        .play-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            border: none;
+            padding: 16px 48px;
+            font-size: 18px;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(76,175,80,0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Tutorial Welcome Screen -->
+    <div id="tutorial-overlay">
+        <div class="tutorial-card">
+            <div class="tutorial-icon">⛏️</div>
+            <div class="tutorial-title">Bienvenido a The Forgotten Depths</div>
+            <div class="tutorial-subtitle">Aprende los controles antes de explorar el mundo</div>
+            
+            <div class="tutorial-controls">
+                <div class="key-hint">
+                    <div class="key">W</div>
+                    <div class="key-label">Adelante</div>
+                </div>
+                <div class="key-hint">
+                    <div class="key">A</div>
+                    <div class="key-label">Izquierda</div>
+                </div>
+                <div class="key-hint">
+                    <div class="key">S</div>
+                    <div class="key-label">Atrás</div>
+                </div>
+                <div class="key-hint">
+                    <div class="key">D</div>
+                    <div class="key-label">Derecha</div>
+                </div>
+                <div class="key-hint">
+                    <div class="key">ESPACIO</div>
+                    <div class="key-label">Saltar</div>
+                </div>
+                <div class="key-hint">
+                    <div class="key">SHIFT</div>
+                    <div class="key-label">Correr</div>
+                </div>
+            </div>
+            
+            <button class="start-btn" onclick="startTutorial()">Comenzar Tutorial</button>
+        </div>
+    </div>
+    
+    <!-- Step Indicator -->
+    <div id="step-indicator">
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
+        <div class="step-dot" id="dot-5"></div>
+        <div class="step-dot" id="dot-6"></div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div id="tutorial-progress">
+        <div id="tutorial-progress-fill" style="width: 0%"></div>
+    </div>
+    
+    <!-- Instruction Panel -->
+    <div id="instruction-panel">
+        <div class="instruction-title" id="instruction-title">Movimiento</div>
+        <div class="instruction-text" id="instruction-text">
+            Usa <span class="instruction-key">W</span> <span class="instruction-key">A</span> <span class="instruction-key">S</span> <span class="instruction-key">D</span> para moverte
+        </div>
+    </div>
+    
+    <!-- Arrow Indicator -->
+    <div id="arrow-indicator">⬇️</div>
+    
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-title">Tutorial</div>
+            <div class="hud-value" id="step-name">Paso 1: Movimiento</div>
+        </div>
+    </div>
+    
+    <!-- Toolbar -->
+    <div id="toolbar">
+        <div class="tool-slot active" id="tool-hand">
+            ✋
+            <span class="tool-name">Mano</span>
+        </div>
+        <div class="tool-slot locked" id="tool-hammer">
+            🔨
+            <span class="tool-name">Martillo</span>
+        </div>
+        <div class="tool-slot locked" id="tool-pickaxe">
+            ⛏️
+            <span class="tool-name">Pico</span>
+        </div>
+        <div class="tool-slot locked" id="tool-key">
+            🗝️
+            <span class="tool-name">Llave</span>
+        </div>
+    </div>
+    
+    <!-- Crosshair -->
+    <div id="crosshair"></div>
+    
+    <!-- Completion Screen -->
+    <div id="completion-screen">
+        <div class="completion-card">
+            <div class="completion-icon">🎉</div>
+            <div class="completion-title">¡Tutorial Completado!</div>
+            <div class="completion-text">Ahora estás listo para explorar The Forgotten Depths</div>
+            <button class="play-btn" onclick="startGame()">Jugar Ahora</button>
+        </div>
+    </div>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+    // ============================================
+    // THE FORGOTTEN DEPTHS - Tutorial Level
+    // ============================================
+    
+    // --- CONSTANTS ---
+    const GRAVITY = -20;
+    const PLAYER_SPEED = 8;
+    const SPRINT_SPEED = 14;
+    const JUMP_FORCE = 8;
+    const PLAYER_HEIGHT = 1.6;
+    const MOUSE_SENSITIVITY = 0.002;
+    
+    // --- GAME STATE ---
+    let gameState = {
+        running: false,
+        currentStep: 0,
+        stepProgress: {},
+        keysPressed: new Set(),
+        mouseClicks: 0,
+        hasJumped: false,
+        hasSprinted: false,
+        hasRotated: false,
+        blocksBroken: 0,
+        blocksPlaced: 0,
+        itemsCollected: 0,
+    };
+    
+    // --- TUTORIAL STEPS ---
+    const TUTORIAL_STEPS = [
+        {
+            id: 'movement',
+            title: 'Paso 1: Movimiento',
+            instruction: 'Usa <span class="instruction-key">W</span> <span class="instruction-key">A</span> <span class="instruction-key">S</span> <span class="instruction-key">D</span> para moverte por el mundo',
+            check: () => gameState.keysPressed.size > 0,
+            onProgress: () => '¡Excelente! Estás moviéndote por el mundo',
+        },
+        {
+            id: 'camera',
+            title: 'Paso 2: Cámara',
+            instruction: 'Mueve el ratón para mirar alrededor',
+            check: () => gameState.hasRotated,
+            onProgress: () => '¡Perfecto! Ahora puedes explorar visualmente',
+        },
+        {
+            id: 'jump',
+            title: 'Paso 3: Saltar',
+            instruction: 'Pulsa <span class="instruction-key">ESPACIO</span> para saltar',
+            check: () => gameState.hasJumped,
+            onProgress: () => '¡Genial! Puedes saltar obstáculos',
+        },
+        {
+            id: 'sprint',
+            title: 'Paso 4: Correr',
+            instruction: 'Mantén <span class="instruction-key">SHIFT</span> mientras te mueves para correr',
+            check: () => gameState.hasSprinted,
+            onProgress: () => '¡Veloz! Ahora puedes recorrer el mundo más rápido',
+        },
+        {
+            id: 'interact',
+            title: 'Paso 5: Interactuar',
+            instruction: 'Acércate al bloque resaltado y pulsa <span class="instruction-key">E</span> o haz clic para interactuar',
+            check: () => gameState.mouseClicks > 0,
+            onProgress: () => '¡Excelente! Puedes interactuar con objetos',
+        },
+        {
+            id: 'tools',
+            title: 'Paso 6: Herramientas',
+            instruction: 'Pulsa <span class="instruction-key">1</span> <span class="instruction-key">2</span> <span class="instruction-key">3</span> <span class="instruction-key">4</span> para cambiar de herramienta',
+            check: () => true, // Always complete
+            onProgress: () => '¡Perfecto! Conoces todas las herramientas',
+        },
+    ];
+    
+    // --- THREE.JS SETUP ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.FogExp2(0x1a1a2e, 0.02);
+    
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    
+    // --- LIGHTING ---
+    const ambientLight = new THREE.AmbientLight(0x404060, 0.4);
+    scene.add(ambientLight);
+    
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 0.8);
+    sunLight.position.set(10, 20, 10);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
+    
+    const pointLight = new THREE.PointLight(0x4fc3f7, 1, 20);
+    pointLight.position.set(0, 5, 0);
+    scene.add(pointLight);
+    
+    // --- TUTORIAL WORLD ---
+    const blockMeshes = new Map();
+    
+    function createBlock(x, y, z, color, type = 'normal') {
+        const geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: color,
+            emissive: type === 'highlight' ? color : 0x000000,
+            emissiveIntensity: type === 'highlight' ? 0.5 : 0,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData = { type, originalColor: color };
+        scene.add(mesh);
+        blockMeshes.set(`${x},${y},${z}`, mesh);
+        return mesh;
+    }
+    
+    function buildTutorialWorld() {
+        // Ground
+        for (let x = -5; x <= 5; x++) {
+            for (let z = -5; z <= 5; z++) {
+                createBlock(x, 0, z, 0x4caf50);
+            }
+        }
+        
+        // Movement path
+        for (let z = -5; z <= 5; z++) {
+            createBlock(0, 1, z, 0x8d6e63);
+        }
+        
+        // Jump platform
+        createBlock(-3, 1, -3, 0xffd54f, 'highlight');
+        createBlock(-3, 2, -3, 0xffd54f, 'highlight');
+        createBlock(-3, 3, -3, 0x2196f3, 'highlight');
+        
+        // Sprint area
+        for (let z = 2; z <= 5; z++) {
+            createBlock(3, 1, z, 0xf44336, 'highlight');
+        }
+        
+        // Interaction target
+        createBlock(0, 1, 3, 0xffeb3b, 'highlight');
+        
+        // Tool display
+        createBlock(-4, 1, 0, 0x9e9e9e);
+        createBlock(-4, 1, 1, 0x9e9e9e);
+        createBlock(-4, 1, 2, 0x9e9e9e);
+        createBlock(-4, 1, 3, 0x9e9e9e);
+        
+        // Decorative trees
+        createTree(-5, 1, -5);
+        createTree(5, 1, -5);
+        createTree(-5, 1, 5);
+        createTree(5, 1, 5);
+    }
+    
+    function createTree(x, y, z) {
+        // Trunk
+        createBlock(x, y, z, 0x6d4c41);
+        createBlock(x, y + 1, z, 0x6d4c41);
+        createBlock(x, y + 2, z, 0x6d4c41);
+        
+        // Leaves
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dz = -1; dz <= 1; dz++) {
+                createBlock(x + dx, y + 3, z + dz, 0x2e7d32);
+                if (Math.abs(dx) + Math.abs(dz) < 2) {
+                    createBlock(x + dx, y + 4, z + dz, 0x2e7d32);
+                }
+            }
+        }
+    }
+    
+    // --- PLAYER CONTROLS ---
+    const keys = {};
+    const velocity = new THREE.Vector3();
+    let isGrounded = false;
+    let yaw = 0;
+    let pitch = 0;
+    
+    document.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        gameState.keysPressed.add(e.code);
+        
+        // Check step completion
+        checkStepCompletion();
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!gameState.running) return;
+        
+        yaw -= e.movementX * MOUSE_SENSITIVITY;
+        pitch -= e.movementY * MOUSE_SENSITIVITY;
+        pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+        
+        gameState.hasRotated = true;
+        checkStepCompletion();
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!gameState.running) return;
+        
+        gameState.mouseClicks++;
+        checkStepCompletion();
+    });
+    
+    function checkStepCompletion() {
+        const currentStep = TUTORIAL_STEPS[gameState.currentStep];
+        if (!currentStep) return;
+        
+        if (currentStep.check()) {
+            // Mark step as complete
+            document.getElementById(`dot-${gameState.currentStep + 1}`).classList.add('completed');
+            document.getElementById(`dot-${gameState.currentStep + 1}`).classList.remove('active');
+            
+            // Show completion message
+            showInstruction(currentStep.title, currentStep.onProgress());
+            
+            // Move to next step after delay
+            setTimeout(() => {
+                gameState.currentStep++;
+                
+                if (gameState.currentStep >= TUTORIAL_STEPS.length) {
+                    completeTutorial();
+                } else {
+                    updateTutorialUI();
+                }
+            }, 2000);
+        }
+    }
+    
+    function updateTutorialUI() {
+        const step = TUTORIAL_STEPS[gameState.currentStep];
+        if (!step) return;
+        
+        // Update step indicator
+        document.getElementById(`dot-${gameState.currentStep + 1}`).classList.add('active');
+        
+        // Update instruction
+        showInstruction(step.title, step.instruction);
+        
+        // Update HUD
+        document.getElementById('step-name').textContent = step.title;
+        
+        // Update progress
+        const progress = (gameState.currentStep / TUTORIAL_STEPS.length) * 100;
+        document.getElementById('tutorial-progress-fill').style.width = `${progress}%`;
+        
+        // Unlock tools based on step
+        if (gameState.currentStep >= 5) {
+            unlockAllTools();
+        }
+    }
+    
+    function showInstruction(title, text) {
+        const panel = document.getElementById('instruction-panel');
+        document.getElementById('instruction-title').textContent = title;
+        document.getElementById('instruction-text').innerHTML = text;
+        panel.classList.add('visible');
+        
+        setTimeout(() => {
+            panel.classList.remove('visible');
+        }, 3000);
+    }
+    
+    function unlockAllTools() {
+        document.getElementById('tool-hammer').classList.remove('locked');
+        document.getElementById('tool-pickaxe').classList.remove('locked');
+        document.getElementById('tool-key').classList.remove('locked');
+    }
+    
+    function updatePlayer(delta) {
+        if (!gameState.running) return;
+        
+        // Camera rotation
+        const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+        camera.quaternion.setFromEuler(euler);
+        
+        // Movement direction
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        
+        forward.y = 0;
+        right.y = 0;
+        forward.normalize();
+        right.normalize();
+        
+        // Input
+        const moveDir = new THREE.Vector3();
+        if (keys['KeyW']) moveDir.add(forward);
+        if (keys['KeyS']) moveDir.sub(forward);
+        if (keys['KeyD']) moveDir.add(right);
+        if (keys['KeyA']) moveDir.sub(right);
+        
+        const speed = keys['ShiftLeft'] ? SPRINT_SPEED : PLAYER_SPEED;
+        
+        if (keys['ShiftLeft'] && moveDir.length() > 0) {
+            gameState.hasSprinted = true;
+        }
+        
+        if (moveDir.length() > 0) {
+            moveDir.normalize();
+            velocity.x = moveDir.x * speed;
+            velocity.z = moveDir.z * speed;
+        } else {
+            velocity.x *= 0.8;
+            velocity.z *= 0.8;
+        }
+        
+        // Gravity
+        velocity.y += GRAVITY * delta;
+        
+        // Jump
+        if (keys['Space'] && isGrounded) {
+            velocity.y = JUMP_FORCE;
+            isGrounded = false;
+            gameState.hasJumped = true;
+        }
+        
+        // Apply velocity with collision
+        const newPos = camera.position.clone();
+        
+        newPos.x += velocity.x * delta;
+        newPos.z += velocity.z * delta;
+        
+        newPos.y += velocity.y * delta;
+        
+        // Ground check
+        if (newPos.y < PLAYER_HEIGHT + 1) {
+            newPos.y = PLAYER_HEIGHT + 1;
+            velocity.y = 0;
+            isGrounded = true;
+        } else {
+            isGrounded = false;
+        }
+        
+        // World bounds
+        newPos.x = Math.max(-6, Math.min(6, newPos.x));
+        newPos.z = Math.max(-6, Math.min(6, newPos.z));
+        
+        camera.position.copy(newPos);
+    }
+    
+    function updateHighlight() {
+        // Pulse highlighted blocks
+        const time = Date.now() * 0.003;
+        blockMeshes.forEach((mesh, key) => {
+            if (mesh.userData.type === 'highlight') {
+                mesh.material.emissiveIntensity = 0.3 + Math.sin(time) * 0.2;
+            }
+        });
+    }
+    
+    function completeTutorial() {
+        gameState.running = false;
+        document.body.style.cursor = 'default';
+        
+        // Update progress to 100%
+        document.getElementById('tutorial-progress-fill').style.width = '100%';
+        
+        // Show completion screen
+        setTimeout(() => {
+            document.getElementById('completion-screen').classList.add('visible');
+        }, 1000);
+    }
+    
+    function startGame() {
+        // Redirect to main game
+        window.location.href = 'index.html';
+    }
+    
+    // --- GAME LOOP ---
+    const clock = new THREE.Clock();
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        const delta = Math.min(clock.getDelta(), 0.1);
+        
+        updatePlayer(delta);
+        updateHighlight();
+        
+        renderer.render(scene, camera);
+    }
+    
+    // --- INITIALIZATION ---
+    function startTutorial() {
+        document.getElementById('tutorial-overlay').classList.add('hidden');
+        gameState.running = true;
+        document.body.style.cursor = 'none';
+        
+        // Request pointer lock
+        renderer.domElement.requestPointerLock().catch(() => {});
+        
+        // Show first instruction
+        updateTutorialUI();
+    }
+    
+    function init() {
+        buildTutorialWorld();
+        
+        // Handle pointer lock
+        renderer.domElement.addEventListener('click', () => {
+            if (gameState.running && !document.pointerLockElement) {
+                renderer.domElement.requestPointerLock().catch(() => {});
+            }
+        });
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        animate();
+    }
+    
+    init();
+    </script>
+</body>
+</html>

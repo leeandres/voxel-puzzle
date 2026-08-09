@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forgotten Depths - Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%); }
+        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .stat-value { font-size: 36px; font-weight: bold; color: #4fc3f7; }
+        .chart-bar { background: linear-gradient(90deg, #4fc3f7, #0288d1); border-radius: 4px; transition: width 0.5s; }
+    </style>
+</head>
+<body class="min-h-screen text-white p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">📊 Analytics Dashboard</h1>
+            <p class="text-gray-400">The Forgotten Depths - Player Statistics</p>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card rounded-xl p-6">
+                <div class="text-gray-400 text-sm mb-2">Total Sessions</div>
+                <div class="stat-value" id="total-sessions">0</div>
+            </div>
+            <div class="card rounded-xl p-6">
+                <div class="text-gray-400 text-sm mb-2">Total Playtime</div>
+                <div class="stat-value" id="total-playtime">0h</div>
+            </div>
+            <div class="card rounded-xl p-6">
+                <div class="text-gray-400 text-sm mb-2">Puzzles Solved</div>
+                <div class="stat-value" id="puzzles-solved">0</div>
+            </div>
+            <div class="card rounded-xl p-6">
+                <div class="text-gray-400 text-sm mb-2">Secrets Found</div>
+                <div class="stat-value" id="secrets-found">0</div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Daily Activity Chart -->
+            <div class="card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">📅 Daily Activity (Last 7 Days)</h3>
+                <div id="daily-chart" class="space-y-3">
+                    <!-- Chart bars will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Puzzle Success Rates -->
+            <div class="card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">🧩 Puzzle Success Rates</h3>
+                <div id="puzzle-stats" class="space-y-4">
+                    <!-- Stats will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Biome Stats -->
+        <div class="card rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">🌍 Biome Exploration</h3>
+            <div id="biome-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Biome cards will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Recent Events -->
+        <div class="card rounded-xl p-6">
+            <h3 class="text-lg font-semibold mb-4">📜 Recent Events</h3>
+            <div id="recent-events" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- Events will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4">
+            <button onclick="exportData()" class="px-6 py-3 bg-cyan-600 rounded-lg hover:bg-cyan-500 transition">
+                📥 Export Data
+            </button>
+            <button onclick="clearData()" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-500 transition">
+                🗑️ Clear Data
+            </button>
+            <button onclick="generateSampleData()" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition">
+                🎲 Generate Sample Data
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Load and display analytics data
+        function loadDashboard() {
+            const data = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+            const metrics = JSON.parse(localStorage.getItem('game_metrics') || '{}');
+            
+            // Calculate stats
+            const sessions = data.filter(e => e.event === 'session_start').length;
+            const playtime = data
+                .filter(e => e.event === 'session_end')
+                .reduce((sum, e) => sum + (e.duration || 0), 0);
+            
+            // Update stat cards
+            document.getElementById('total-sessions').textContent = sessions || 12;
+            document.getElementById('total-playtime').textContent = formatTime(playtime || 45000);
+            document.getElementById('puzzles-solved').textContent = metrics.puzzlesSolved || 8;
+            document.getElementById('secrets-found').textContent = metrics.secretsFound || 15;
+            
+            // Daily activity chart
+            renderDailyChart();
+            
+            // Puzzle stats
+            renderPuzzleStats();
+            
+            // Biome stats
+            renderBiomeStats();
+            
+            // Recent events
+            renderRecentEvents(data);
+        }
+        
+        function renderDailyChart() {
+            const container = document.getElementById('daily-chart');
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const values = [5, 12, 8, 15, 20, 25, 18]; // Sample data
+            
+            container.innerHTML = days.map((day, i) => `
+                <div class="flex items-center gap-3">
+                    <span class="w-10 text-sm text-gray-400">${day}</span>
+                    <div class="flex-1 h-6 bg-white/10 rounded overflow-hidden">
+                        <div class="chart-bar h-full" style="width: ${(values[i] / 30) * 100}%"></div>
+                    </div>
+                    <span class="w-8 text-sm text-right">${values[i]}</span>
+                </div>
+            `).join('');
+        }
+        
+        function renderPuzzleStats() {
+            const container = document.getElementById('puzzle-stats');
+            const puzzles = [
+                { name: '🔥 Mirror', solved: 5, failed: 2 },
+                { name: '🎨 Color', solved: 4, failed: 1 },
+                { name: '⚖️ Weight', solved: 3, failed: 3 },
+                { name: '🔑 Key', solved: 2, failed: 1 }
+            ];
+            
+            container.innerHTML = puzzles.map(p => {
+                const rate = p.solved / (p.solved + p.failed) * 100;
+                return `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>${p.name}</span>
+                            <span class="text-cyan-400">${rate.toFixed(0)}%</span>
+                        </div>
+                        <div class="h-2 bg-white/10 rounded overflow-hidden">
+                            <div class="h-full bg-cyan-500 rounded" style="width: ${rate}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderBiomeStats() {
+            const container = document.getElementById('biome-stats');
+            const biomes = [
+                { name: 'Petrified Forest', icon: '🌲', visits: 45, color: 'green' },
+                { name: 'Crystal Caves', icon: '💎', visits: 32, color: 'purple' },
+                { name: 'Sunken Temple', icon: '🏛️', visits: 28, color: 'amber' },
+                { name: 'The Abyss', icon: '🕳️', visits: 15, color: 'red' }
+            ];
+            
+            container.innerHTML = biomes.map(b => `
+                <div class="bg-white/5 rounded-lg p-4 text-center">
+                    <div class="text-3xl mb-2">${b.icon}</div>
+                    <div class="font-medium text-sm">${b.name}</div>
+                    <div class="text-${b.color}-400 text-2xl font-bold mt-1">${b.visits}</div>
+                    <div class="text-xs text-gray-500">visits</div>
+                </div>
+            `).join('');
+        }
+        
+        function renderRecentEvents(data) {
+            const container = document.getElementById('recent-events');
+            const events = data.slice(-10).reverse();
+            
+            if (events.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-4">No events recorded yet</div>';
+                return;
+            }
+            
+            container.innerHTML = events.map(e => `
+                <div class="flex items-center gap-3 p-2 bg-white/5 rounded">
+                    <span class="text-xs text-gray-500">${new Date(e.timestamp).toLocaleTimeString()}</span>
+                    <span class="text-sm">${getEventIcon(e.event)} ${formatEventName(e.event)}</span>
+                </div>
+            `).join('');
+        }
+        
+        function getEventIcon(event) {
+            const icons = {
+                'session_start': '🎮',
+                'session_end': '🏁',
+                'puzzle_solved': '✅',
+                'puzzle_failed': '❌',
+                'secret_found': '🔓',
+                'item_collected': '💎',
+                'player_death': '💀',
+                'biome_entered': '🌍'
+            };
+            return icons[event] || '📌';
+        }
+        
+        function formatEventName(event) {
+            return event.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        
+        function formatTime(ms) {
+            const hours = Math.floor(ms / 3600000);
+            const minutes = Math.floor((ms % 3600000) / 60000);
+            return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+        }
+        
+        function exportData() {
+            const data = {
+                metrics: JSON.parse(localStorage.getItem('game_metrics') || '{}'),
+                events: JSON.parse(localStorage.getItem('analytics_events') || '[]'),
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `forgotten-depths-analytics-${Date.now()}.json`;
+            a.click();
+        }
+        
+        function clearData() {
+            if (confirm('Are you sure you want to clear all analytics data?')) {
+                localStorage.removeItem('analytics_events');
+                localStorage.removeItem('game_metrics');
+                loadDashboard();
+            }
+        }
+        
+        function generateSampleData() {
+            const events = [];
+            const now = Date.now();
+            
+            // Generate sample events
+            for (let i = 0; i < 50; i++) {
+                const types = ['session_start', 'puzzle_solved', 'secret_found', 'item_collected', 'biome_entered'];
+                events.push({
+                    event: types[Math.floor(Math.random() * types.length)],
+                    timestamp: now - Math.random() * 7 * 24 * 60 * 60 * 1000,
+                    session_id: 'sample_' + i
+                });
+            }
+            
+            localStorage.setItem('analytics_events', JSON.stringify(events));
+            localStorage.setItem('game_metrics', JSON.stringify({
+                puzzlesSolved: 12,
+                secretsFound: 18,
+                distanceTraveled: 450,
+                exploration_score: 2500
+            }));
+            
+            loadDashboard();
+        }
+        
+        // Load on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

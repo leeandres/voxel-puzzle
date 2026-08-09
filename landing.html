@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forgotten Depths - Puzzle Adventure Game</title>
+    <meta name="description" content="Explore ancient ruins, solve puzzles, and discover secrets in this cooperative voxel adventure game.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+        }
+        
+        .hero-gradient {
+            background: radial-gradient(ellipse at center, rgba(79,195,247,0.15) 0%, transparent 70%);
+        }
+        
+        .card-glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(79,195,247,0.4);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(79,195,247,0.3);
+        }
+        
+        .screenshot-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .glow {
+            text-shadow: 0 0 40px rgba(79,195,247,0.5);
+        }
+        
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+            40% { transform: translateY(-10px) translateX(-50%); }
+            60% { transform: translateY(-5px) translateX(-50%); }
+        }
+        
+        .parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+    </style>
+</head>
+<body class="gradient-bg text-white">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⛏️</span>
+                <span class="text-lg font-bold">The Forgotten Depths</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-gray-400 hover:text-white transition">Features</a>
+                <a href="#screenshots" class="text-gray-400 hover:text-white transition">Screenshots</a>
+                <a href="#how-to-play" class="text-gray-400 hover:text-white transition">How to Play</a>
+                <a href="#faq" class="text-gray-400 hover:text-white transition">FAQ</a>
+            </div>
+            <a href="index.html" class="btn-primary px-5 py-2 rounded-full font-semibold text-sm">
+                ▶️ Play Now
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
+        <div class="hero-gradient absolute inset-0"></div>
+        
+        <!-- Floating elements -->
+        <div class="absolute top-32 left-20 text-6xl floating opacity-20" style="animation-delay: 0s;">💎</div>
+        <div class="absolute top-40 right-32 text-5xl floating opacity-20" style="animation-delay: 0.5s;">🗝️</div>
+        <div class="absolute bottom-40 left-32 text-4xl floating opacity-20" style="animation-delay: 1s;">🧩</div>
+        <div class="absolute bottom-32 right-20 text-6xl floating opacity-20" style="animation-delay: 1.5s;">⛏️</div>
+        
+        <div class="relative z-10 text-center px-6 max-w-5xl">
+            <div class="mb-6">
+                <span class="inline-block px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-400 text-sm font-medium">
+                    🎮 Free to Play • Browser Game • Cooperative
+                </span>
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                <span class="text-white">The Forgotten</span><br>
+                <span class="text-cyan-400 glow">Depths</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
+                Explore ancient ruins, solve environmental puzzles, and discover hidden secrets 
+                in this cooperative voxel adventure. <span class="text-cyan-400">Each player sees a different reality.</span>
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="index.html" class="btn-primary px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2">
+                    <span>▶️</span> Start Playing
+                </a>
+                <a href="tutorial.html" class="px-8 py-4 rounded-full font-semibold text-lg border border-white/20 hover:border-cyan-400 hover:bg-white/5 transition flex items-center gap-2">
+                    <span>📚</span> Tutorial
+                </a>
+            </div>
+            
+            <div class="mt-12 flex justify-center gap-8 text-sm text-gray-500">
+                <div class="flex items-center gap-2">
+                    <span class="text-cyan-400">✓</span> No download required
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-cyan-400">✓</span> 100% Free
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-cyan-400">✓</span> Play in browser
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-10 left-1/2 scroll-indicator">
+            <div class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+                <div class="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 font-semibold text-sm uppercase tracking-wider">Features</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 mb-6">Why You'll Love It</h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    A unique blend of exploration, puzzle-solving, and cooperative gameplay
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">🌍</div>
+                    <h3 class="text-xl font-bold mb-3">Procedural Worlds</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Every game generates a unique world with 4 distinct biomes: Petrified Forest, 
+                        Crystal Caves, Sunken Temple, and The Abyss.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">🧩</div>
+                    <h3 class="text-xl font-bold mb-3">Environmental Puzzles</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Solve mirror reflections, color sequences, weight balancing, and riddle stones 
+                        that are part of the world itself.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">🤝</div>
+                    <h3 class="text-xl font-bold mb-3">Asymmetric Co-op</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        4 unique roles with different abilities: Cartographer, Explorer, Cipher, 
+                        and Vigil. Communication is key!
+                    </p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">🔓</div>
+                    <h3 class="text-xl font-bold mb-3">Hidden Secrets</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Discover breakable walls, hidden rooms, treasure chests, and collect all 
+                        50 journal pages to uncover the ancient mystery.
+                    </p>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold mb-3">Progress Tracking</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Track your statistics, achievements, and game history with our 
+                        integrated dashboard system.
+                    </p>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="feature-card card-glass rounded-2xl p-8 transition-all duration-300">
+                    <div class="text-4xl mb-4">🎵</div>
+                    <h3 class="text-xl font-bold mb-3">Immersive Audio</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Procedural ambient music and spatial sound effects that adapt 
+                        to your location and actions.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section id="screenshots" class="py-24 px-6 bg-black/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 font-semibold text-sm uppercase tracking-wider">Gallery</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 mb-6">See the World</h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    Explore ancient ruins and solve puzzles in stunning voxel graphics
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Screenshot 1 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-green-900/50 to-green-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">🌲</span>
+                            <span class="text-sm text-gray-400">Petrified Forest</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">Mystic Forest Biome</h4>
+                        <p class="text-sm text-gray-400">Ancient stone trees guard hidden secrets</p>
+                    </div>
+                </div>
+                
+                <!-- Screenshot 2 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-purple-900/50 to-blue-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">💎</span>
+                            <span class="text-sm text-gray-400">Crystal Caves</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">Crystal Caves Biome</h4>
+                        <p class="text-sm text-gray-400">Glowing crystals light the underground</p>
+                    </div>
+                </div>
+                
+                <!-- Screenshot 3 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-amber-900/50 to-orange-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">🏛️</span>
+                            <span class="text-sm text-gray-400">Sunken Temple</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">Sunken Temple Biome</h4>
+                        <p class="text-sm text-gray-400">Ancient ruins hold forgotten knowledge</p>
+                    </div>
+                </div>
+                
+                <!-- Screenshot 4 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-red-900/50 to-red-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">🧩</span>
+                            <span class="text-sm text-gray-400">Mirror Puzzle</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">Mirror Puzzle Room</h4>
+                        <p class="text-sm text-gray-400">Redirect light beams to unlock doors</p>
+                    </div>
+                </div>
+                
+                <!-- Screenshot 5 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-cyan-900/50 to-blue-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">🎨</span>
+                            <span class="text-sm text-gray-400">Color Sequence</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">Crystal Colors Puzzle</h4>
+                        <p class="text-sm text-gray-400">Activate crystals in the right order</p>
+                    </div>
+                </div>
+                
+                <!-- Screenshot 6 -->
+                <div class="screenshot-card card-glass rounded-2xl overflow-hidden transition-all duration-300">
+                    <div class="aspect-video bg-gradient-to-br from-gray-900/50 to-gray-700/30 flex items-center justify-center">
+                        <div class="text-center">
+                            <span class="text-6xl block mb-2">🕳️</span>
+                            <span class="text-sm text-gray-400">The Abyss</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-semibold">The Abyss Biome</h4>
+                        <p class="text-sm text-gray-400">Danger lurks in the deepest depths</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Play Section -->
+    <section id="how-to-play" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 font-semibold text-sm uppercase tracking-wider">Tutorial</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 mb-6">How to Play</h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    Master the controls and become an expert explorer
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Step 1 -->
+                <div class="card-glass rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">1️⃣</span>
+                    </div>
+                    <h3 class="font-bold mb-2">Move</h3>
+                    <p class="text-gray-400 text-sm">Use <kbd class="px-2 py-1 bg-white/10 rounded">W</kbd> <kbd class="px-2 py-1 bg-white/10 rounded">A</kbd> <kbd class="px-2 py-1 bg-white/10 rounded">S</kbd> <kbd class="px-2 py-1 bg-white/10 rounded">D</kbd> to explore</p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="card-glass rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">2️⃣</span>
+                    </div>
+                    <h3 class="font-bold mb-2">Look</h3>
+                    <p class="text-gray-400 text-sm">Move <kbd class="px-2 py-1 bg-white/10 rounded">Mouse</kbd> to look around</p>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="card-glass rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">3️⃣</span>
+                    </div>
+                    <h3 class="font-bold mb-2">Interact</h3>
+                    <p class="text-gray-400 text-sm">Press <kbd class="px-2 py-1 bg-white/10 rounded">E</kbd> or <kbd class="px-2 py-1 bg-white/10 rounded">Click</kbd> to interact</p>
+                </div>
+                
+                <!-- Step 4 -->
+                <div class="card-glass rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">4️⃣</span>
+                    </div>
+                    <h3 class="font-bold mb-2">Solve</h3>
+                    <p class="text-gray-400 text-sm">Use tools with <kbd class="px-2 py-1 bg-white/10 rounded">1</kbd>-<kbd class="px-2 py-1 bg-white/10 rounded">4</kbd></p>
+                </div>
+            </div>
+            
+            <!-- Controls Reference -->
+            <div class="mt-12 card-glass rounded-2xl p-8">
+                <h3 class="text-xl font-bold mb-6 text-center">⌨️ All Controls</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">W A S D</kbd>
+                        <span class="text-gray-400">Move</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">Mouse</kbd>
+                        <span class="text-gray-400">Look</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">Space</kbd>
+                        <span class="text-gray-400">Jump</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">Shift</kbd>
+                        <span class="text-gray-400">Sprint</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">E / Click</kbd>
+                        <span class="text-gray-400">Interact</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">1-4</kbd>
+                        <span class="text-gray-400">Tools</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">F</kbd>
+                        <span class="text-gray-400">Flashlight</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <kbd class="px-3 py-2 bg-white/10 rounded font-mono">J</kbd>
+                        <span class="text-gray-400">Journal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 px-6 bg-black/30">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 font-semibold text-sm uppercase tracking-wider">FAQ</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 mb-6">Frequently Asked Questions</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- FAQ 1 -->
+                <div class="card-glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="font-semibold">Is the game free?</span>
+                        <span class="text-cyan-400">+</span>
+                    </button>
+                    <div class="px-6 pb-4 text-gray-400 hidden">
+                        Yes! The Forgotten Depths is 100% free to play. No downloads, no accounts required. Just open and play!
+                    </div>
+                </div>
+                
+                <!-- FAQ 2 -->
+                <div class="card-glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="font-semibold">Can I play on mobile?</span>
+                        <span class="text-cyan-400">+</span>
+                    </button>
+                    <div class="px-6 pb-4 text-gray-400 hidden">
+                        The game works on mobile browsers, but for the best experience we recommend playing on PC with keyboard and mouse.
+                    </div>
+                </div>
+                
+                <!-- FAQ 3 -->
+                <div class="card-glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="font-semibold">How does cooperative mode work?</span>
+                        <span class="text-cyan-400">+</span>
+                    </button>
+                    <div class="px-6 pb-4 text-gray-400 hidden">
+                        In co-op mode, each player gets a unique role with different abilities. The Cartographer sees the map, the Explorer moves around, the Cipher solves codes, and the Vigil detects dangers. You must communicate to solve puzzles!
+                    </div>
+                </div>
+                
+                <!-- FAQ 4 -->
+                <div class="card-glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="font-semibold">What browser do I need?</span>
+                        <span class="text-cyan-400">+</span>
+                    </button>
+                    <div class="px-6 pb-4 text-gray-400 hidden">
+                        Any modern browser works: Chrome, Firefox, Safari, or Edge. Make sure WebGL is enabled in your browser settings.
+                    </div>
+                </div>
+                
+                <!-- FAQ 5 -->
+                <div class="card-glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="font-semibold">Can I play with friends?</span>
+                        <span class="text-cyan-400">+</span>
+                    </button>
+                    <div class="px-6 pb-4 text-gray-400 hidden">
+                        Yes! Create a room and share the code with your friends. Up to 4 players can join and explore together.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="card-glass rounded-3xl p-12 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10"></div>
+                <div class="relative z-10">
+                    <span class="text-6xl block mb-6">⛏️</span>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Explore?</h2>
+                    <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+                        Dive into The Forgotten Depths and discover what lies beneath. 
+                        Your adventure awaits!
+                    </p>
+                    <a href="index.html" class="inline-block btn-primary px-10 py-5 rounded-full font-bold text-xl">
+                        ▶️ Start Your Adventure
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-12 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">⛏️</span>
+                    <span class="font-bold">The Forgotten Depths</span>
+                </div>
+                
+                <div class="flex gap-6 text-sm text-gray-500">
+                    <a href="tutorial.html" class="hover:text-white transition">Tutorial</a>
+                    <a href="dashboard.html" class="hover:text-white transition">Dashboard</a>
+                    <a href="login.html" class="hover:text-white transition">Login</a>
+                </div>
+                
+                <div class="text-sm text-gray-500">
+                    © 2026 The Forgotten Depths. Made with ❤️
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-black/80');
+            } else {
+                nav.classList.remove('bg-black/80');
+            }
+        });
+        
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.feature-card, .screenshot-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Controls</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .audio-panel {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 320px;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .control-label span:first-child {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .control-label span:last-child {
+            color: #4fc3f7;
+            font-weight: 500;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4fc3f7;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(79,195,247,0.5);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4fc3f7;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .mute-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mute-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #4fc3f7;
+        }
+        
+        .mute-btn.muted {
+            background: rgba(244,67,54,0.2);
+            border-color: #f44336;
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .test-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+        
+        .test-btn:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+    <div class="audio-panel">
+        <div class="panel-title">🔊 Audio Settings</div>
+        
+        <div class="control-group">
+            <div class="control-label">
+                <span>🎵 Music Volume</span>
+                <span id="music-value">30%</span>
+            </div>
+            <input type="range" class="slider" id="music-slider" min="0" max="100" value="30">
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">
+                <span>🔊 Sound Effects</span>
+                <span id="sfx-value">50%</span>
+            </div>
+            <input type="range" class="slider" id="sfx-slider" min="0" max="100" value="50">
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">
+                <span>🌿 Ambient Sounds</span>
+                <span id="ambient-value">20%</span>
+            </div>
+            <input type="range" class="slider" id="ambient-slider" min="0" max="100" value="20">
+        </div>
+        
+        <button class="mute-btn" id="mute-btn">🔊 Unmuted</button>
+        
+        <button class="test-btn" id="test-btn">▶️ Test All Sounds</button>
+        
+        <div class="status" id="status">Audio not initialized. Click to enable.</div>
+    </div>
+
+    <script src="audio-system.js"></script>
+    <script>
+        // Initialize audio on first interaction
+        document.addEventListener('click', () => {
+            audioSystem.init();
+            audioSystem.resume();
+            document.getElementById('status').textContent = '✅ Audio initialized';
+            document.getElementById('status').style.color = '#4caf50';
+        }, { once: true });
+        
+        // Music volume slider
+        document.getElementById('music-slider').addEventListener('input', (e) => {
+            const value = e.target.value / 100;
+            audioSystem.setMusicVolume(value);
+            document.getElementById('music-value').textContent = `${e.target.value}%`;
+        });
+        
+        // SFX volume slider
+        document.getElementById('sfx-slider').addEventListener('input', (e) => {
+            const value = e.target.value / 100;
+            audioSystem.setSFXVolume(value);
+            document.getElementById('sfx-value').textContent = `${e.target.value}%`;
+        });
+        
+        // Ambient volume slider
+        document.getElementById('ambient-slider').addEventListener('input', (e) => {
+            const value = e.target.value / 100;
+            audioSystem.setAmbientVolume(value);
+            document.getElementById('ambient-value').textContent = `${e.target.value}%`;
+        });
+        
+        // Mute button
+        let isMuted = false;
+        document.getElementById('mute-btn').addEventListener('click', () => {
+            isMuted = audioSystem.toggleMute();
+            const btn = document.getElementById('mute-btn');
+            btn.textContent = isMuted ? '🔇 Muted' : '🔊 Unmuted';
+            btn.classList.toggle('muted', isMuted);
+        });
+        
+        // Test button
+        document.getElementById('test-btn').addEventListener('click', () => {
+            audioSystem.init();
+            audioSystem.resume();
+            
+            // Play test sounds
+            audioSystem.playBlockBreak('stone');
+            setTimeout(() => audioSystem.playCrystalActivate('red'), 200);
+            setTimeout(() => audioSystem.playMirrorRotate(), 400);
+            setTimeout(() => audioSystem.playItemPickup(), 600);
+            setTimeout(() => audioSystem.playPuzzleSolved(), 800);
+            
+            // Start music
+            audioSystem.startMusic();
+            audioSystem.startAmbient('forest');
+            
+            document.getElementById('status').textContent = '▶️ Playing test sounds...';
+            document.getElementById('status').style.color = '#ffab00';
+        });
+    </script>
+</body>
+</html>
