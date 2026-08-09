@@ -368,6 +368,7 @@
             <div class="hud-title">FPS</div>
             <div class="hud-value" id="fps-display">60</div>
         </div>
+        <button id="mute-btn" style="background: rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; cursor: pointer; font-size: 20px; margin-top: 10px;">🔊</button>
     </div>
     
     <!-- Minimap -->
@@ -448,6 +449,163 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = false;  // No shadows for performance
     document.body.appendChild(renderer.domElement);
+    
+    // --- AUDIO SYSTEM ---
+    let audioCtx = null;
+    let masterGain = null;
+    let musicGain = null;
+    let sfxGain = null;
+    let isMuted = false;
+    let ambientOscillators = [];
+    
+    function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.5;
+        masterGain.connect(audioCtx.destination);
+        
+        musicGain = audioCtx.createGain();
+        musicGain.gain.value = 0.3;
+        musicGain.connect(masterGain);
+        
+        sfxGain = audioCtx.createGain();
+        sfxGain.gain.value = 0.6;
+        sfxGain.connect(masterGain);
+    }
+    
+    function playTone(frequency, duration, type = 'sine', gainValue = 0.3, destination = sfxGain) {
+        if (!audioCtx || isMuted) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = gainValue;
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duration);
+    }
+    
+    function playFootstep() {
+        if (!audioCtx || isMuted) return;
+        const noise = audioCtx.createBufferSource();
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.01));
+        }
+        noise.buffer = buffer;
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.1;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 200 + Math.random() * 100;
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(sfxGain);
+        noise.start();
+    }
+    
+    // Footstep timer
+    let lastFootstepTime = 0;
+    const FOOTSTEP_INTERVAL = 0.3; // seconds between footsteps
+    
+    function playPickup() {
+        playTone(523, 0.1, 'sine', 0.4);
+        setTimeout(() => playTone(659, 0.1, 'sine', 0.4), 50);
+        setTimeout(() => playTone(784, 0.15, 'sine', 0.4), 100);
+    }
+    
+    function playDoorOpen() {
+        playTone(200, 0.3, 'sawtooth', 0.2);
+        setTimeout(() => playTone(250, 0.3, 'sawtooth', 0.15), 100);
+    }
+    
+    function playPuzzleSolve() {
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.2, 'sine', 0.3), i * 100);
+        });
+    }
+    
+    function playSecretFound() {
+        playTone(880, 0.15, 'sine', 0.3);
+        setTimeout(() => playTone(1100, 0.15, 'sine', 0.3), 80);
+        setTimeout(() => playTone(1320, 0.2, 'sine', 0.3), 160);
+    }
+    
+    function playLevelComplete() {
+        const melody = [523, 659, 784, 1047, 784, 1047, 1319];
+        melody.forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.25, 'sine', 0.3), i * 120);
+        });
+    }
+    
+    function playError() {
+        playTone(200, 0.2, 'square', 0.2);
+        setTimeout(() => playTone(150, 0.3, 'square', 0.15), 100);
+    }
+    
+    // Ambient music
+    function startAmbientMusic() {
+        if (!audioCtx || isMuted) return;
+        
+        // Low drone
+        const osc1 = audioCtx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = 55;
+        const gain1 = audioCtx.createGain();
+        gain1.gain.value = 0.08;
+        osc1.connect(gain1);
+        gain1.connect(musicGain);
+        osc1.start();
+        ambientOscillators.push({ osc: osc1, gain: gain1 });
+        
+        // High pad
+        const osc2 = audioCtx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = 220;
+        const gain2 = audioCtx.createGain();
+        gain2.gain.value = 0.03;
+        osc2.connect(gain2);
+        gain2.connect(musicGain);
+        osc2.start();
+        ambientOscillators.push({ osc: osc2, gain: gain2 });
+        
+        // LFO for movement
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.1;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 10;
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc2.frequency);
+        lfo.start();
+        ambientOscillators.push({ osc: lfo, gain: lfoGain });
+    }
+    
+    function stopAmbientMusic() {
+        ambientOscillators.forEach(({ osc, gain }) => {
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            setTimeout(() => osc.stop(), 500);
+        });
+        ambientOscillators = [];
+    }
+    
+    function toggleMute() {
+        isMuted = !isMuted;
+        if (masterGain) {
+            masterGain.gain.value = isMuted ? 0 : 0.5;
+        }
+        const muteBtn = document.getElementById('mute-btn');
+        if (muteBtn) {
+            muteBtn.textContent = isMuted ? '🔇' : '🔊';
+        }
+    }
+    
+    // Add mute button listener
+    document.getElementById('mute-btn').addEventListener('click', toggleMute);
     
     // --- LIGHTING ---
     const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
@@ -973,11 +1131,23 @@
             const newZ = camera.position.z + moveDir.z * speed * delta;
             
             // Check collision with sliding
+            let moved = false;
             if (!checkCollision(newX, camera.position.z)) {
                 camera.position.x = newX;
+                moved = true;
             }
             if (!checkCollision(camera.position.x, newZ)) {
                 camera.position.z = newZ;
+                moved = true;
+            }
+            
+            // Play footstep sound
+            if (moved) {
+                const now = Date.now() / 1000;
+                if (now - lastFootstepTime > FOOTSTEP_INTERVAL) {
+                    playFootstep();
+                    lastFootstepTime = now;
+                }
             }
         }
         
@@ -993,6 +1163,7 @@
             if (dist < 1.5) {
                 gameState.hasKey = true;
                 scene.remove(keyMesh);
+                playPickup();
                 showNotification('🔑', '¡Llave Encontrada!', 'Ahora puedes abrir la puerta');
                 document.getElementById('puzzle-key').classList.add('solved');
             }
@@ -1004,6 +1175,7 @@
             if (dist < 2) {
                 gameState.doorOpen = true;
                 scene.remove(doorMesh);
+                playDoorOpen();
                 showNotification('🚪', '¡Puerta Abierta!', 'El camino está libre');
                 document.getElementById('puzzle-door').classList.add('solved');
             }
@@ -1022,6 +1194,7 @@
                     gameState.lightPuzzleSolved = true;
                     lightPuzzle.target.material.emissive.setHex(0x00ff00);
                     lightPuzzle.target.material.emissiveIntensity = 1;
+                    playPuzzleSolve();
                     showNotification('💡', '¡Puzzle de Luz Resuelto!', 'El rayo alcanza el objetivo');
                     document.getElementById('puzzle-light').classList.add('solved');
                 }
@@ -1046,10 +1219,12 @@
                             c.userData.activated = false;
                             c.material.emissiveIntensity = 0.5;
                         });
+                        playError();
                         showNotification('🎨', 'Secuencia Incorrecta', 'Intenta de nuevo');
                     } else if (colorPuzzle.currentSequence.length === colorPuzzle.correctOrder.length) {
                         colorPuzzle.solved = true;
                         gameState.colorPuzzleSolved = true;
+                        playPuzzleSolve();
                         showNotification('🎨', '¡Puzzle de Color Resuelto!', 'Secuencia correcta');
                         document.getElementById('puzzle-color').classList.add('solved');
                     }
@@ -1075,10 +1250,12 @@
                             p.userData.activated = false;
                             p.position.y = 0.05;
                         });
+                        playError();
                         showNotification('⬇️', 'Secuencia Incorrecta', 'Pisa las placas en orden');
                     } else if (platePuzzle.currentSequence.length === platePuzzle.correctOrder.length) {
                         platePuzzle.solved = true;
                         gameState.platePuzzleSolved = true;
+                        playPuzzleSolve();
                         showNotification('⬇️', '¡Puzzle de Placas Resuelto!', 'Orden correcto');
                         document.getElementById('puzzle-plate').classList.add('solved');
                     }
@@ -1104,10 +1281,12 @@
                             r.userData.activated = false;
                             r.children[0].material.color.setHex(0x9944ff);
                         });
+                        playError();
                         showNotification('🔮', 'Secuencia Incorrecta', 'Activa las runas en orden');
                     } else if (runePuzzle.currentSequence.length === runePuzzle.correctSequence.length) {
                         runePuzzle.solved = true;
                         gameState.runePuzzleSolved = true;
+                        playPuzzleSolve();
                         showNotification('🔮', '¡Puzzle de Runas Resuelto!', 'Secuencia correcta');
                         document.getElementById('puzzle-rune').classList.add('solved');
                     }
@@ -1121,6 +1300,7 @@
             if (dist < 2) {
                 const completionTime = Date.now() - gameState.startTime;
                 addScore(gameState.level, completionTime);
+                playLevelComplete();
                 showNotification('🏆', '¡Nivel Completado!', `Tiempo: ${formatTime(completionTime)} - Guardado en leaderboard`);
                 setTimeout(() => {
                     gameState.level++;
@@ -1142,6 +1322,7 @@
                     secret.found = true;
                     gameState.secretsFound++;
                     document.getElementById('secrets-count').textContent = gameState.secretsFound;
+                    playSecretFound();
                     showNotification('✨', '¡Secreto Encontrado!', `Has descubierto un ${secret.type}`);
                 }
             }
@@ -1335,6 +1516,8 @@
     // --- START GAME ---
     document.getElementById('start-btn').addEventListener('click', () => {
         askPlayerName();
+        initAudio();
+        startAmbientMusic();
         document.getElementById('start-screen').style.display = 'none';
         gameState.running = true;
         gameState.startTime = Date.now();
