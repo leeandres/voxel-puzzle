@@ -82,6 +82,26 @@
             transform: scale(1.05);
             box-shadow: 0 0 50px rgba(76,175,80,0.5);
         }
+        .start-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        #leaderboard-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(255,152,0,0.3);
+        }
+        #leaderboard-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(255,152,0,0.5);
+        }
         .controls-hint {
             margin-top: 30px;
             color: #666;
@@ -189,6 +209,83 @@
             color: #ffcc00;
         }
         
+        /* Leaderboard Modal */
+        #leaderboard-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        .leaderboard-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #4fc3f7;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .leaderboard-content h2 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .leaderboard-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: #4fc3f7;
+            color: #000;
+        }
+        #leaderboard-list {
+            margin-bottom: 20px;
+        }
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .leaderboard-entry.gold { border-left: 4px solid #ffd700; }
+        .leaderboard-entry.silver { border-left: 4px solid #c0c0c0; }
+        .leaderboard-entry.bronze { border-left: 4px solid #cd7f32; }
+        .rank { color: #ffd700; font-weight: bold; }
+        .player-name { color: white; }
+        .best-time { color: #4caf50; font-weight: bold; }
+        #close-leaderboard {
+            width: 100%;
+            padding: 12px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #close-leaderboard:hover {
+            background: #d32f2f;
+        }
+        
         /* Notification */
         #notification {
             position: fixed;
@@ -221,7 +318,10 @@
     <div id="start-screen">
         <h1>🏛️ The Forgotten Depths</h1>
         <p class="subtitle">Maze Puzzle Explorer</p>
-        <button id="start-btn">Comenzar Exploración</button>
+        <div class="start-buttons">
+            <button id="start-btn">Comenzar Exploración</button>
+            <button id="leaderboard-btn">🏆 Leaderboard</button>
+        </div>
         <div class="controls-hint">
             <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Mover &nbsp;&nbsp;
             <kbd>Mouse</kbd> Mirar &nbsp;&nbsp;
@@ -229,6 +329,21 @@
             <kbd>F</kbd> Linterna &nbsp;&nbsp;
             <kbd>J</kbd> Diario &nbsp;&nbsp;
             <kbd>1-4</kbd> Herramientas
+        </div>
+    </div>
+    
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" style="display: none;">
+        <div class="leaderboard-content">
+            <h2>🏆 Leaderboard</h2>
+            <div class="leaderboard-tabs">
+                <button class="tab-btn active" data-level="1">Nivel 1</button>
+                <button class="tab-btn" data-level="2">Nivel 2</button>
+                <button class="tab-btn" data-level="3">Nivel 3</button>
+                <button class="tab-btn" data-level="all">Todos</button>
+            </div>
+            <div id="leaderboard-list"></div>
+            <button id="close-leaderboard">Cerrar</button>
         </div>
     </div>
     
@@ -1004,7 +1119,9 @@
         if (exitPosition) {
             const dist = camera.position.distanceTo(new THREE.Vector3(exitPosition.x, PLAYER_HEIGHT, exitPosition.z));
             if (dist < 2) {
-                showNotification('🏃', '¡Nivel Completado!', `Tiempo: ${formatTime(Date.now() - gameState.startTime)}`);
+                const completionTime = Date.now() - gameState.startTime;
+                addScore(gameState.level, completionTime);
+                showNotification('🏆', '¡Nivel Completado!', `Tiempo: ${formatTime(completionTime)} - Guardado en leaderboard`);
                 setTimeout(() => {
                     gameState.level++;
                     gameState.hasKey = false;
@@ -1054,6 +1171,109 @@
     function updateTime() {
         if (gameState.running) {
             document.getElementById('time-display').textContent = formatTime(Date.now() - gameState.startTime);
+        }
+    }
+    
+    // --- LEADERBOARD SYSTEM ---
+    const LEADERBOARD_KEY = 'mazeLeaderboard';
+    
+    function getLeaderboard() {
+        const data = localStorage.getItem(LEADERBOARD_KEY);
+        return data ? JSON.parse(data) : {};
+    }
+    
+    function saveLeaderboard(leaderboard) {
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+    }
+    
+    function addScore(level, timeMs) {
+        const leaderboard = getLeaderboard();
+        const levelKey = `level_${level}`;
+        
+        if (!leaderboard[levelKey]) {
+            leaderboard[levelKey] = [];
+        }
+        
+        // Get player name (prompt or default)
+        const playerName = localStorage.getItem('playerName') || 'Jugador';
+        
+        leaderboard[levelKey].push({
+            name: playerName,
+            time: timeMs,
+            date: new Date().toISOString()
+        });
+        
+        // Sort by time (fastest first) and keep top 10
+        leaderboard[levelKey].sort((a, b) => a.time - b.time);
+        leaderboard[levelKey] = leaderboard[levelKey].slice(0, 10);
+        
+        saveLeaderboard(leaderboard);
+        return leaderboard[levelKey];
+    }
+    
+    function showLeaderboard(level = null) {
+        const leaderboard = getLeaderboard();
+        const listEl = document.getElementById('leaderboard-list');
+        listEl.innerHTML = '';
+        
+        let entries = [];
+        if (level && level !== 'all') {
+            entries = leaderboard[`level_${level}`] || [];
+        } else {
+            // Show all levels combined
+            Object.keys(leaderboard).forEach(key => {
+                entries = entries.concat(leaderboard[key].map(e => ({...e, level: key}));
+            });
+            entries.sort((a, b) => a.time - b.time);
+            entries = entries.slice(0, 10);
+        }
+        
+        if (entries.length === 0) {
+            listEl.innerHTML = '<p style="color: #666; text-align: center;">No hay tiempos registrados</p>';
+        } else {
+            entries.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = `leaderboard-entry ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}`;
+                div.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <span class="player-name">${entry.name}</span>
+                    <span class="best-time">${formatTime(entry.time)}</span>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+        
+        document.getElementById('leaderboard-modal').style.display = 'flex';
+    }
+    
+    function hideLeaderboard() {
+        document.getElementById('leaderboard-modal').style.display = 'none';
+    }
+    
+    // Leaderboard tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const level = btn.dataset.level;
+            showLeaderboard(level === 'all' ? null : parseInt(level));
+        });
+    });
+    
+    // Open/close leaderboard
+    document.getElementById('leaderboard-btn').addEventListener('click', () => {
+        showLeaderboard();
+    });
+    
+    document.getElementById('close-leaderboard').addEventListener('click', hideLeaderboard);
+    
+    // Ask for player name on first visit
+    function askPlayerName() {
+        if (!localStorage.getItem('playerName')) {
+            const name = prompt('Ingresa tu nombre para el leaderboard:', 'Jugador');
+            if (name && name.trim()) {
+                localStorage.setItem('playerName', name.trim());
+            }
         }
     }
     
@@ -1114,6 +1334,7 @@
     
     // --- START GAME ---
     document.getElementById('start-btn').addEventListener('click', () => {
+        askPlayerName();
         document.getElementById('start-screen').style.display = 'none';
         gameState.running = true;
         gameState.startTime = Date.now();
