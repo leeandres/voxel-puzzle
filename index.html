@@ -951,7 +951,7 @@
         currentTool: 'hand',
         journalOpen: false,
         dayTime: 0.5,
-        flashlightOn: false,
+        flashlightOn: true,
         currentBiome: 'PETRIFIED_FOREST',
         inventory: [],
         journalPages: [],
@@ -976,10 +976,16 @@
     document.body.appendChild(renderer.domElement);
     
     // --- LIGHTING ---
-    const ambientLight = new THREE.AmbientLight(0x404060, 0.3);
+    // Ambient light for base visibility (increased)
+    const ambientLight = new THREE.AmbientLight(0x606080, 0.6);
     scene.add(ambientLight);
     
-    const sunLight = new THREE.DirectionalLight(0xfff4e0, 0.8);
+    // Hemisphere light for sky/ground color variation
+    const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c3d, 0.4);
+    scene.add(hemiLight);
+    
+    // Sun light for shadows and highlights
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.0);
     sunLight.position.set(WORLD_SIZE/2, 50, WORLD_SIZE/2);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 4096;
@@ -992,9 +998,9 @@
     sunLight.shadow.camera.bottom = -40;
     scene.add(sunLight);
     
-    // Flashlight (point light attached to camera)
-    const flashlight = new THREE.SpotLight(0xffffcc, 0, 20, Math.PI / 6, 0.5);
-    flashlight.position.copy(camera.position);
+    // Player Flashlight (starts ON)
+    const flashlight = new THREE.SpotLight(0xffffcc, 1.5, 30, Math.PI / 4, 0.3, 1);
+    flashlight.position.set(0, 0, 0);
     camera.add(flashlight);
     flashlight.target.position.set(0, 0, -1);
     camera.add(flashlight.target);
@@ -1480,8 +1486,8 @@
                 
                 // Check if there's a solid block below
                 if (getBlock(x, y - 1, z) !== BLOCK.AIR && getBlock(x, y - 1, z) !== BLOCK.WATER) {
-                    // Random chance to place torch
-                    if (Math.random() < 0.01) {
+                    // Random chance to place torch (increased for better visibility)
+                    if (Math.random() < 0.025) {
                         setBlock(x, y, z, BLOCK.TORCH);
                     }
                 }
@@ -1538,12 +1544,12 @@
                 secretMeshes.set(key, mesh);
             }
             
-            // Add point light for certain blocks
+            // Add point light for certain blocks (increased brightness)
             if (type === BLOCK.TORCH || type === BLOCK.GLOWING_MUSHROOM || type === BLOCK.CRYSTAL_CLUSTER) {
                 const light = new THREE.PointLight(
                     type === BLOCK.TORCH ? 0xff6600 : 
                     type === BLOCK.GLOWING_MUSHROOM ? 0x76ff03 : 0x7c4dff,
-                    0.5, 8
+                    1.0, 12
                 );
                 light.position.set(x + 0.5, y + 1, z + 0.5);
                 scene.add(light);
@@ -1944,8 +1950,8 @@
         
         if (e.code === 'KeyF') {
             gameState.flashlightOn = !gameState.flashlightOn;
-            flashlight.intensity = gameState.flashlightOn ? 2 : 0;
-            showHint('🔦', gameState.flashlightOn ? 'Flashlight ON' : 'Flashlight OFF');
+            flashlight.intensity = gameState.flashlightOn ? 1.5 : 0;
+            showHint('🔦', gameState.flashlightOn ? 'Linterna ENCENDIDA' : 'Linterna APAGADA');
         }
     });
     
