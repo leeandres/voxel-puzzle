@@ -91,6 +91,13 @@
         .time-panel .hud-subtitle {
             color: #ff9900;
         }
+        .fps-panel {
+            border-color: rgba(100,200,100,0.4);
+            background: rgba(0,30,0,0.7);
+        }
+        .fps-panel .hud-value {
+            color: #4caf50;
+        }
         
         /* Mini Map */
         #minimap {
@@ -517,6 +524,10 @@
             <div class="hud-value"><span id="time-display">12:00</span></div>
             <div class="hud-subtitle" id="phase-display">☀️ Day</div>
         </div>
+        <div class="hud-panel fps-panel">
+            <div class="hud-title">FPS</div>
+            <div class="hud-value"><span id="fps-display">60</span></div>
+        </div>
     </div>
     
     <!-- Mini Map -->
@@ -804,13 +815,33 @@
     const WORLD_SIZE = 48;
     const WORLD_HEIGHT = 32;
     const BLOCK_SIZE = 1;
+    
+    // --- FPS COUNTER ---
+    let fps = 0;
+    let frameCount = 0;
+    let lastFpsUpdate = Date.now();
+    
+    function updateFPS() {
+        frameCount++;
+        const now = Date.now();
+        if (now - lastFpsUpdate >= 1000) {
+            fps = frameCount;
+            frameCount = 0;
+            lastFpsUpdate = now;
+            const fpsDisplay = document.getElementById('fps-display');
+            if (fpsDisplay) {
+                fpsDisplay.textContent = fps;
+                fpsDisplay.style.color = fps >= 50 ? '#4caf50' : fps >= 30 ? '#ff9800' : '#f44336';
+            }
+        }
+    }
     const GRAVITY = -20;
     const PLAYER_SPEED = 8;
     const SPRINT_SPEED = 14;
     const JUMP_FORCE = 8;
     const PLAYER_HEIGHT = 1.6;
     const MOUSE_SENSITIVITY = 0.002;
-    const RENDER_DISTANCE = 20;
+    const RENDER_DISTANCE = 15;  // Reduced for better performance
     
     // Block types
     const BLOCK = {
@@ -863,23 +894,23 @@
         [BLOCK.DIRT]: { color: 0x8d6e63, roughness: 0.95 },
         [BLOCK.STONE]: { color: 0x757575, roughness: 0.85 },
         [BLOCK.WOOD]: { color: 0x6d4c41, roughness: 0.9 },
-        [BLOCK.LEAVES]: { color: 0x2e7d32, roughness: 0.8, transparent: true, opacity: 0.9 },
-        [BLOCK.CRYSTAL_RED]: { color: 0xf44336, emissive: 0xf44336, emissiveIntensity: 0.5, transparent: true, opacity: 0.8 },
-        [BLOCK.CRYSTAL_BLUE]: { color: 0x2196f3, emissive: 0x2196f3, emissiveIntensity: 0.5, transparent: true, opacity: 0.8 },
-        [BLOCK.CRYSTAL_GREEN]: { color: 0x4caf50, emissive: 0x4caf50, emissiveIntensity: 0.5, transparent: true, opacity: 0.8 },
-        [BLOCK.CRYSTAL_YELLOW]: { color: 0xffeb3b, emissive: 0xffeb3b, emissiveIntensity: 0.5, transparent: true, opacity: 0.8 },
+        [BLOCK.LEAVES]: { color: 0x2e7d32, roughness: 0.8 },
+        [BLOCK.CRYSTAL_RED]: { color: 0xf44336, emissive: 0xf44336, emissiveIntensity: 0.5 },
+        [BLOCK.CRYSTAL_BLUE]: { color: 0x2196f3, emissive: 0x2196f3, emissiveIntensity: 0.5 },
+        [BLOCK.CRYSTAL_GREEN]: { color: 0x4caf50, emissive: 0x4caf50, emissiveIntensity: 0.5 },
+        [BLOCK.CRYSTAL_YELLOW]: { color: 0xffeb3b, emissive: 0xffeb3b, emissiveIntensity: 0.5 },
         [BLOCK.MIRROR]: { color: 0xcfd8dc, emissive: 0x4fc3f7, emissiveIntensity: 0.3, roughness: 0.1, metalness: 0.9 },
         [BLOCK.LIGHT_SOURCE]: { color: 0xffab00, emissive: 0xffab00, emissiveIntensity: 2 },
         [BLOCK.RECEIVER]: { color: 0x9e9e9e, emissive: 0x4caf50, emissiveIntensity: 0.2 },
         [BLOCK.DOOR]: { color: 0x5d4037, roughness: 0.8 },
         [BLOCK.SAND]: { color: 0xffe082, roughness: 0.95 },
-        [BLOCK.GLASS]: { color: 0xe3f2fd, transparent: true, opacity: 0.3, roughness: 0.1 },
+        [BLOCK.GLASS]: { color: 0xadd8e6, roughness: 0.1 },
         [BLOCK.SECRET_WALL]: { color: 0x546e7a, roughness: 0.85 },
         [BLOCK.TORCH]: { color: 0xff9800, emissive: 0xff6600, emissiveIntensity: 2.5 },
         [BLOCK.WEIGHT_PLATFORM]: { color: 0x455a64, metalness: 0.5 },
         [BLOCK.HEAVY_BLOCK]: { color: 0x37474f, roughness: 0.7 },
         [BLOCK.PRESSURE_PLATE]: { color: 0x78909c, metalness: 0.3 },
-        [BLOCK.WATER]: { color: 0x1565c0, transparent: true, opacity: 0.6, roughness: 0.1 },
+        [BLOCK.WATER]: { color: 0x1976d2, roughness: 0.3 },
         [BLOCK.LAVA]: { color: 0xff5722, emissive: 0xff5722, emissiveIntensity: 1 },
         [BLOCK.BEDROCK]: { color: 0x212121, roughness: 1 },
         [BLOCK.COAL_ORE]: { color: 0x424242, roughness: 0.9 },
@@ -985,8 +1016,7 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = false;  // Disabled for performance
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 3.0;
     document.body.appendChild(renderer.domElement);
@@ -1003,15 +1033,7 @@
     // Sun light for shadows and highlights
     const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
     sunLight.position.set(WORLD_SIZE/2, 50, WORLD_SIZE/2);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 4096;
-    sunLight.shadow.mapSize.height = 4096;
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 100;
-    sunLight.shadow.camera.left = -40;
-    sunLight.shadow.camera.right = 40;
-    sunLight.shadow.camera.top = 40;
-    sunLight.shadow.camera.bottom = -40;
+    sunLight.castShadow = false;  // Disabled for performance
     scene.add(sunLight);
     
     // Player Flashlight (starts ON - much brighter and wider)
@@ -1581,8 +1603,8 @@
             
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
             mesh.userData = { blockType: type, x, y, z, key };
             
             scene.add(mesh);
@@ -1593,12 +1615,12 @@
                 secretMeshes.set(key, mesh);
             }
             
-            // Add point light for certain blocks (very bright)
-            if (type === BLOCK.TORCH || type === BLOCK.GLOWING_MUSHROOM || type === BLOCK.CRYSTAL_CLUSTER) {
+            // Add point light for certain blocks (limited for performance)
+            if (torchLights.length < 20 && (type === BLOCK.TORCH || type === BLOCK.GLOWING_MUSHROOM || type === BLOCK.CRYSTAL_CLUSTER)) {
                 const light = new THREE.PointLight(
                     type === BLOCK.TORCH ? 0xff6600 : 
                     type === BLOCK.GLOWING_MUSHROOM ? 0x76ff03 : 0x7c4dff,
-                    2.0, 18
+                    1.5, 12
                 );
                 light.position.set(x + 0.5, y + 1, z + 0.5);
                 scene.add(light);
@@ -2439,6 +2461,9 @@
         const delta = Math.min(clock.getDelta(), 0.1);
         const time = Date.now() * 0.001;
         
+        // Update FPS counter
+        updateFPS();
+        
         updatePlayer(delta);
         updateRaycast();
         updateDayNight(delta);
@@ -2458,7 +2483,7 @@
         }
         
         // Spawn player particles occasionally
-        if (Math.random() < 0.1 && playerParticles.length < 50) {
+        if (Math.random() < 0.05 && playerParticles.length < 20) {
             const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
             const particleMaterial = new THREE.MeshBasicMaterial({
                 color: 0x00ffff,
