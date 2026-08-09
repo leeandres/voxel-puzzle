@@ -80,6 +80,17 @@
             font-weight: bold;
             color: #4fc3f7;
         }
+        .hud-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 4px;
+        }
+        .time-panel .hud-value {
+            color: #ffcc00;
+        }
+        .time-panel .hud-subtitle {
+            color: #ff9900;
+        }
         
         /* Mini Map */
         #minimap {
@@ -500,6 +511,11 @@
         <div class="hud-panel">
             <div class="hud-title" data-i18n="hudPosition">Posición</div>
             <div class="hud-value" id="player-pos">0, 0, 0</div>
+        </div>
+        <div class="hud-panel time-panel">
+            <div class="hud-title">Tiempo</div>
+            <div class="hud-value"><span id="time-display">12:00</span></div>
+            <div class="hud-subtitle" id="phase-display">☀️ Day</div>
         </div>
     </div>
     
@@ -2229,22 +2245,137 @@
     }
     
     // --- DAY/NIGHT CYCLE ---
+    // --- DAY/NIGHT CYCLE SYSTEM ---
+    // Time phases: 0.0-0.25 = night, 0.25-0.35 = dawn, 0.35-0.65 = day, 0.65-0.75 = dusk, 0.75-1.0 = night
+    const TIME_PRESETS = {
+        night: {
+            skyColor: new THREE.Color(0x0a0a1a),
+            fogColor: new THREE.Color(0x0a0a1a),
+            ambientColor: new THREE.Color(0x202040),
+            ambientIntensity: 0.3,
+            sunIntensity: 0.1,
+            sunColor: new THREE.Color(0x3344aa),
+            hemiSkyColor: new THREE.Color(0x111122),
+            hemiGroundColor: new THREE.Color(0x111111),
+            hemiIntensity: 0.1,
+            fogDensity: 0.008,
+        },
+        dawn: {
+            skyColor: new THREE.Color(0xff7043),
+            fogColor: new THREE.Color(0xff8a65),
+            ambientColor: new THREE.Color(0xffccaa),
+            ambientIntensity: 0.8,
+            sunIntensity: 0.6,
+            sunColor: new THREE.Color(0xff9966),
+            hemiSkyColor: new THREE.Color(0xff8855),
+            hemiGroundColor: new THREE.Color(0x553322),
+            hemiIntensity: 0.5,
+            fogDensity: 0.006,
+        },
+        day: {
+            skyColor: new THREE.Color(0x87ceeb),
+            fogColor: new THREE.Color(0x9ac4e8),
+            ambientColor: new THREE.Color(0xffffff),
+            ambientIntensity: 2.5,
+            sunIntensity: 1.5,
+            sunColor: new THREE.Color(0xfff4e0),
+            hemiSkyColor: new THREE.Color(0x87ceeb),
+            hemiGroundColor: new THREE.Color(0x3d5c3d),
+            hemiIntensity: 0.8,
+            fogDensity: 0.005,
+        },
+        dusk: {
+            skyColor: new THREE.Color(0xff6b35),
+            fogColor: new THREE.Color(0xff8c42),
+            ambientColor: new THREE.Color(0xffaa77),
+            ambientIntensity: 0.6,
+            sunIntensity: 0.4,
+            sunColor: new THREE.Color(0xff6644),
+            hemiSkyColor: new THREE.Color(0xff5533),
+            hemiGroundColor: new THREE.Color(0x332211),
+            hemiIntensity: 0.4,
+            fogDensity: 0.007,
+        }
+    };
+    
+    // Get time phase name from dayTime (0-1)
+    function getTimePhase(t) {
+        if (t < 0.2) return 'night';       // 0.00 - 0.20: Night
+        if (t < 0.3) return 'dawn';        // 0.20 - 0.30: Dawn
+        if (t < 0.7) return 'day';         // 0.30 - 0.70: Day
+        if (t < 0.8) return 'dusk';        // 0.70 - 0.80: Dusk
+        return 'night';                     // 0.80 - 1.00: Night
+    }
+    
+    // Get blend factor for smooth transitions
+    function getBlendFactor(t) {
+        if (t < 0.2) return 1.0;           // Full night
+        if (t < 0.25) return 1.0 - (t - 0.2) * 20;  // Night to Dawn transition
+        if (t < 0.3) return (t - 0.25) * 20;          // Dawn to Day transition
+        if (t < 0.7) return 1.0;           // Full day
+        if (t < 0.75) return 1.0 - (t - 0.7) * 20;   // Day to Dusk transition
+        if (t < 0.8) return (t - 0.75) * 20;          // Dusk to Night transition
+        return 1.0;                         // Full night
+    }
+    
+    // Get display time string (24h format)
+    function getDisplayTime(t) {
+        const hours = Math.floor(t * 24);
+        const minutes = Math.floor((t * 24 - hours) * 60);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    // Get time emoji
+    function getTimeEmoji(phase) {
+        switch(phase) {
+            case 'dawn': return '🌅';
+            case 'day': return '☀️';
+            case 'dusk': return '🌇';
+            case 'night': return '🌙';
+            default: return '☀️';
+        }
+    }
+    
     function updateDayNight(delta) {
-        gameState.dayTime = (gameState.dayTime + delta * 0.005) % 1;
+        // Update time
+        gameState.dayTime = (gameState.dayTime + delta * 0.02) % 1;
         
-        const sunAngle = gameState.dayTime * Math.PI * 2;
-        sunLight.position.x = Math.cos(sunAngle) * 40 + WORLD_SIZE/2;
-        sunLight.position.y = Math.sin(sunAngle) * 40 + 10;
+        const time = gameState.dayTime;
+        const sunAngle = time * Math.PI * 2 - Math.PI / 2;  // Start at east
+        const phase = getTimePhase(time);
+        const blend = getBlendFactor(time);
+        const preset = TIME_PRESETS[phase];
+        
+        // Update sun position
+        sunLight.position.x = Math.cos(sunAngle) * 50 + WORLD_SIZE/2;
+        sunLight.position.y = Math.max(5, Math.sin(sunAngle) * 50);
         sunLight.position.z = WORLD_SIZE/2;
         
-        const dayIntensity = Math.max(0, Math.sin(sunAngle));
-        sunLight.intensity = 0.2 + dayIntensity * 0.6;
-        ambientLight.intensity = 0.1 + dayIntensity * 0.2;
+        // Update sun light
+        sunLight.intensity = preset.sunIntensity * blend;
+        sunLight.color.lerp(preset.sunColor, 0.1);
         
-        const skyColor = new THREE.Color();
-        skyColor.setHSL(0.6, 0.3, 0.05 + dayIntensity * 0.15);
-        scene.background = skyColor;
-        scene.fog.color = skyColor;
+        // Update ambient light
+        ambientLight.intensity = preset.ambientIntensity * blend;
+        ambientLight.color.lerp(preset.ambientColor, 0.1);
+        
+        // Update hemisphere light
+        hemiLight.intensity = preset.hemiIntensity * blend;
+        hemiLight.color.lerp(preset.hemiSkyColor, 0.1);
+        hemiLight.groundColor.lerp(preset.hemiGroundColor, 0.1);
+        
+        // Update fog
+        scene.fog.density = preset.fogDensity;
+        scene.fog.color.lerp(preset.skyColor, 0.1);
+        
+        // Update sky background
+        scene.background.lerp(preset.skyColor, 0.1);
+        
+        // Update HUD time display
+        const timeDisplay = document.getElementById('time-display');
+        const phaseDisplay = document.getElementById('phase-display');
+        if (timeDisplay) timeDisplay.textContent = getDisplayTime(time);
+        if (phaseDisplay) phaseDisplay.textContent = `${getTimeEmoji(phase)} ${phase.charAt(0).toUpperCase() + phase.slice(1)}`;
     }
     
     // --- PARTICLES ---
