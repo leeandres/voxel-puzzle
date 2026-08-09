@@ -209,6 +209,39 @@
             color: #ffcc00;
         }
         
+        /* Volume Slider */
+        #volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        #volume-slider:hover::-webkit-slider-thumb {
+            background: #81d4fa;
+        }
+        #volume-slider:hover::-moz-range-thumb {
+            background: #81d4fa;
+        }
+        
         /* Leaderboard Modal */
         #leaderboard-modal {
             position: fixed;
@@ -368,7 +401,10 @@
             <div class="hud-title">FPS</div>
             <div class="hud-value" id="fps-display">60</div>
         </div>
-        <button id="mute-btn" style="background: rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; cursor: pointer; font-size: 20px; margin-top: 10px;">🔊</button>
+        <div id="audio-controls" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+            <button id="mute-btn" style="background: rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 18px;">🔊</button>
+            <input type="range" id="volume-slider" min="0" max="100" value="50" style="width: 80px; cursor: pointer;">
+        </div>
     </div>
     
     <!-- Minimap -->
@@ -593,10 +629,19 @@
         ambientOscillators = [];
     }
     
+    let currentVolume = 0.5;
+    
+    function setVolume(value) {
+        currentVolume = value;
+        if (masterGain && !isMuted) {
+            masterGain.gain.value = currentVolume;
+        }
+    }
+    
     function toggleMute() {
         isMuted = !isMuted;
         if (masterGain) {
-            masterGain.gain.value = isMuted ? 0 : 0.5;
+            masterGain.gain.value = isMuted ? 0 : currentVolume;
         }
         const muteBtn = document.getElementById('mute-btn');
         if (muteBtn) {
@@ -606,6 +651,12 @@
     
     // Add mute button listener
     document.getElementById('mute-btn').addEventListener('click', toggleMute);
+    
+    // Add volume slider listener
+    document.getElementById('volume-slider').addEventListener('input', (e) => {
+        const value = e.target.value / 100;
+        setVolume(value);
+    });
     
     // --- LIGHTING ---
     const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
