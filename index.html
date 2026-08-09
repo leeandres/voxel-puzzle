@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Forgotten Depths - Procedural World Generator</title>
@@ -2282,6 +2290,24 @@
     }
     
     init();
+    </script>
+    
+    <!-- Custom Game Event Tracking -->
+    <script>
+        // Track game events
+        function trackGameEvent(eventName, params = {}) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, params);
+            }
+        }
+        
+        // Expose globally for game code
+        window.trackGameEvent = trackGameEvent;
+        
+        // Track page load
+        window.addEventListener('load', () => {
+            trackGameEvent('page_view', { page_title: 'The Forgotten Depths' });
+        });
     </script>
 </body>
 </html>
