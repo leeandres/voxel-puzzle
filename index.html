@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Forgotten Depths - Procedural World Generator</title>
+    <title>The Forgotten Depths - Generador de Mundo Procedural</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -408,25 +408,73 @@
         #biome-indicator .biome-icon {
             margin-right: 8px;
         }
+    
+        /* Language Selector */
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+        }
+        
+        .language-selector label {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .language-selector select {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #4caf50;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .language-selector select:hover {
+            border-color: #66bb6a;
+            background: rgba(76, 175, 80, 0.2);
+        }
+        
+        .language-selector select option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
     <!-- Start Screen -->
     <div id="start-screen">
-        <h1>⛏️ The Forgotten Depths</h1>
-        <p class="subtitle">Procedural World Generator</p>
-        <div class="seed-container">
-            <input type="text" class="seed-input" id="world-seed" placeholder="Enter seed (or leave random)">
+        <div class="language-selector">
+            <label data-i18n="languageLabel">Idioma:</label>
+            <select id="language-select">
+                <option value="es">🇪🇸 Español</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="pt">🇧🇷 Português</option>
+                <option value="fr">🇫🇷 Français</option>
+            </select>
         </div>
-        <button id="start-btn">Start Exploring</button>
+        <h1>⛏️ <span data-i18n="gameTitle">The Forgotten Depths</span></h1>
+        <p class="subtitle" data-i18n="gameSubtitle">Generador de Mundo Procedural</p>
+        <div class="seed-container">
+            <input type="text" class="seed-input" id="world-seed" data-i18n-placeholder="seedPlaceholder" placeholder="Ingresa una semilla (o déjala aleatoria)">
+        </div>
+        <button id="start-btn" data-i18n="startButton">Comenzar Exploración</button>
         <div class="controls-hint">
-            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move &nbsp;&nbsp;
-            <kbd>Mouse</kbd> Look Around<br>
-            <kbd>E</kbd> / <kbd>Click</kbd> Interact &nbsp;&nbsp;
-            <kbd>J</kbd> Journal &nbsp;&nbsp;
-            <kbd>1-4</kbd> Select Tool<br>
-            <kbd>F</kbd> Flashlight &nbsp;&nbsp;
-            <kbd>Shift</kbd> Sprint
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span data-i18n="instructionsMove">Mover</span> &nbsp;&nbsp;
+            <kbd>Mouse</kbd> <span data-i18n="instructionsLook">Mirar</span><br>
+            <kbd>E</kbd> / <kbd>Click</kbd> <span data-i18n="instructionsInteract">Interactuar</span> &nbsp;&nbsp;
+            <kbd>J</kbd> <span data-i18n="instructionsJournal">Diario</span> &nbsp;&nbsp;
+            <kbd>1-4</kbd> <span data-i18n="instructionsTools">Herramientas</span><br>
+            <kbd>F</kbd> <span data-i18n="instructionsLinterna">Linterna</span> &nbsp;&nbsp;
+            <kbd>Shift</kbd> <span data-i18n="instructionsJump">Saltar</span>
         </div>
     </div>
     
@@ -436,21 +484,21 @@
     <!-- Biome Indicator -->
     <div id="biome-indicator">
         <span class="biome-icon">🌲</span>
-        <span id="biome-name">Petrified Forest</span>
+        <span id="biome-name" data-biome="PetrifiedForest" data-i18n="biomePetrifiedForest">Bosque Petrificado</span>
     </div>
     
     <!-- HUD -->
     <div id="hud">
         <div class="hud-panel">
-            <div class="hud-title">Seed</div>
+            <div class="hud-title" data-i18n="hudSeed">Semilla</div>
             <div class="hud-value" id="seed-display">---</div>
         </div>
         <div class="hud-panel">
-            <div class="hud-title">Secrets Found</div>
+            <div class="hud-title" data-i18n="hudSecrets">Secretos Encontrados</div>
             <div class="hud-value"><span id="secrets-count">0</span> / <span id="total-secrets">?</span></div>
         </div>
         <div class="hud-panel">
-            <div class="hud-title">Position</div>
+            <div class="hud-title" data-i18n="hudPosition">Posición</div>
             <div class="hud-value" id="player-pos">0, 0, 0</div>
         </div>
     </div>
@@ -458,31 +506,31 @@
     <!-- Mini Map -->
     <div id="minimap">
         <canvas id="minimap-canvas" width="150" height="150"></canvas>
-        <div class="label">Map</div>
+        <div class="label" data-i18n="minimapLabel">Mapa</div>
     </div>
     
     <!-- Puzzle Progress -->
     <div id="puzzle-progress">
         <div class="progress-item">
-            <span class="progress-label">🔥 Mirror</span>
+            <span class="progress-label" data-puzzle="Mirror"><span class="puzzle-icon">🔥</span> <span data-i18n="puzzleMirror">Espejo</span></span>
             <div class="progress-bar">
                 <div class="progress-fill" id="mirror-progress" style="width: 0%; background: linear-gradient(90deg, #ff6b6b, #ffab00);"></div>
             </div>
         </div>
         <div class="progress-item">
-            <span class="progress-label">🎨 Color</span>
+            <span class="progress-label" data-puzzle="Color"><span class="puzzle-icon">🎨</span> <span data-i18n="puzzleColor">Color</span></span>
             <div class="progress-bar">
                 <div class="progress-fill" id="color-progress" style="width: 0%; background: linear-gradient(90deg, #4caf50, #8bc34a);"></div>
             </div>
         </div>
         <div class="progress-item">
-            <span class="progress-label">⚖️ Weight</span>
+            <span class="progress-label" data-puzzle="Weight"><span class="puzzle-icon">⚖️</span> <span data-i18n="puzzleWeight">Peso</span></span>
             <div class="progress-bar">
                 <div class="progress-fill" id="weight-progress" style="width: 0%; background: linear-gradient(90deg, #2196f3, #00bcd4);"></div>
             </div>
         </div>
         <div class="progress-item">
-            <span class="progress-label">🔑 Keys</span>
+            <span class="progress-label" data-puzzle="Keys"><span class="puzzle-icon">🔑</span> <span data-i18n="puzzleKeys">Llaves</span></span>
             <div class="progress-bar">
                 <div class="progress-fill" id="keys-progress" style="width: 0%; background: linear-gradient(90deg, #9c27b0, #e040fb);"></div>
             </div>
@@ -526,6 +574,7 @@
     
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="i18n.js"></script>
     
     <script>
     // ============================================
@@ -2287,6 +2336,43 @@
         seedInput.focus();
         
         animate();
+    }
+    
+    // Language Selector
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        // Set initial value from saved preference
+        languageSelect.value = localStorage.getItem('gameLang') || 'es';
+        
+        // Add change listener
+        languageSelect.addEventListener('change', (e) => {
+            const newLang = e.target.value;
+            I18n.setLanguage(newLang);
+            
+            // Update controls hint text
+            updateControlsHint();
+            
+            // Track language change
+            if (typeof trackGameEvent === 'function') {
+                trackGameEvent('language_change', { language: newLang });
+            }
+        });
+    }
+    
+    // Function to update controls hint based on language
+    function updateControlsHint() {
+        const hintDiv = document.querySelector('.controls-hint');
+        if (hintDiv) {
+            hintDiv.innerHTML = `
+                <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ${I18n.t('instructionsMove')} &nbsp;&nbsp;
+                <kbd>Mouse</kbd> ${I18n.t('instructionsLook')}<br>
+                <kbd>E</kbd> / <kbd>Click</kbd> ${I18n.t('instructionsInteract')} &nbsp;&nbsp;
+                <kbd>J</kbd> ${I18n.t('instructionsJournal')} &nbsp;&nbsp;
+                <kbd>1-4</kbd> ${I18n.t('instructionsTools')}<br>
+                <kbd>F</kbd> ${I18n.t('instructionsLinterna')} &nbsp;&nbsp;
+                <kbd>Shift</kbd> ${I18n.t('instructionsJump')}
+            `;
+        }
     }
     
     init();
